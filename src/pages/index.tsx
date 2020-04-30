@@ -82,8 +82,10 @@ export default () => {
                     </ListItem>
                     <ListItem>
                         {clientInitialized && (
-                            <ListItemText>Your Chat ID: {peerClient.id}</ListItemText>
-                            <ListItemText>Share with a friend</ListItemText>
+                            <>
+                                <ListItemText>Your Chat ID: {peerClient.id}</ListItemText>
+                                <ListItemText>Share with a friend</ListItemText>
+                            </>
                         )}
                     </ListItem>
                 </List>
