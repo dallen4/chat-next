@@ -1,7 +1,6 @@
 import { isClient } from 'config';
 import { PeerUtils, ConnectionMap, ConnectionInstance } from 'types/peer';
 import Peer from 'peerjs';
-import { nanoid } from 'nanoid';
 
 export default class PeerClient {
     public peerClient: Peer;
@@ -103,33 +102,32 @@ export default class PeerClient {
     }
 
     requestMedia = (streamHandler: any, errorHandler: any) => {
-        // navigator.getUserMedia =
-        //             navigator.getUserMedia ||
-        //             navigator.webkitGetUserMedia ||
-        //             navigator.mozGetUserMedia;
+        const contraintOptions: MediaStreamConstraints = {
+            video: {
+                facingMode: 'user',
+                width: {
+                    ideal: 4096,
+                },
+                height: {
+                    ideal: 2160,
+                },
+            },
+            audio: true,
+        };
 
         if (
             typeof navigator.mediaDevices === 'undefined' ||
             typeof navigator.mediaDevices.getUserMedia === 'undefined'
         ) {
-            navigator.getUserMedia(
-                {
-                    video: {
-                        facingMode: 'user',
-                    },
-                    audio: true,
-                },
-                streamHandler,
-                errorHandler,
-            );
+            navigator.getUserMedia =
+                navigator.getUserMedia ||
+                navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia;
+
+            navigator.getUserMedia(contraintOptions, streamHandler, errorHandler);
         } else {
             navigator.mediaDevices
-                .getUserMedia({
-                    video: {
-                        facingMode: 'user',
-                    },
-                    audio: true,
-                })
+                .getUserMedia(contraintOptions)
                 .then(streamHandler)
                 .catch(errorHandler);
         }
