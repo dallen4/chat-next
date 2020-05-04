@@ -12,12 +12,16 @@ import {
     TextField,
     Button,
     Typography,
+    LinearProgress,
+    IconButton,
 } from '@material-ui/core';
 import { PeerClientContext } from 'contexts/PeerClientContext';
-import { Plus } from 'mdi-material-ui';
+import { Plus, Phone, Video } from 'mdi-material-ui';
 import clsx from 'clsx';
+import { ConnectionInstance } from 'types/peer';
+import ReactPlayer from 'react-player';
 
-const drawerWidth = 220;
+const drawerWidth = 280;
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -82,12 +86,50 @@ export default () => {
     const classes = useStyles();
 
     const peerClient = useContext(PeerClientContext);
+
+    const [currentConnection, setCurrentConnection] = React.useState<ConnectionInstance>(
+        null,
+    );
+
+    const [isLoading, setIsLoading] = React.useState(false);
     const [clientInitialized, setInitialized] = React.useState(false);
 
+    const [peerIdInput, setPeerIdInput] = React.useState('');
+    const [messageInput, setMessageInput] = React.useState('');
+    const [messages, setMessages] = React.useState([]);
+
+    const [mediaStream, setMediaStream] = React.useState<string>(null);
+
     const initializeClient = async () => {
-        await peerClient.init();
+        setIsLoading(true);
+        await peerClient.init(setCurrentConnection, addMessage, renderMedia);
         setInitialized(true);
+        setIsLoading(false);
     };
+
+    const addMessage = (message: string) => {
+        console.log(messages);
+        const newMessages = [...messages, message];
+        console.log(newMessages);
+        setMessages(newMessages);
+    };
+
+    const startNewConnection = async () => {
+        const connection = await peerClient.createConnection(peerIdInput);
+        connection.client.on('data', addMessage);
+        setCurrentConnection(connection);
+        setPeerIdInput('');
+    };
+
+    const sendMessage = async () => {
+        currentConnection.client.send(messageInput);
+        addMessage(messageInput);
+        setMessageInput('');
+    };
+
+    const renderMedia = (stream: any) => {
+        setMediaStream(stream);
+    }
 
     return (
         <div className={classes.root}>
@@ -103,11 +145,57 @@ export default () => {
                     </Typography>
                     {clientInitialized && <Typography>ID: {peerClient.id}</Typography>}
                 </Toolbar>
-                <List>
+                <List style={{ color: 'white' }}>
                     {clientInitialized && (
-                        <ListItem>
-                            <Button endIcon={<Plus />}>Create Channel</Button>
-                        </ListItem>
+                        <>
+                            <ListItem>
+                                <TextField
+                                    id={'peerIdInput'}
+                                    name={'peerIdInput'}
+                                    value={peerIdInput}
+                                    onChange={(event) =>
+                                        setPeerIdInput(event.target.value)
+                                    }
+                                    variant={'outlined'}
+                                    color={'primary'}
+                                    placeholder={'Peer ID'}
+                                    disabled={!clientInitialized}
+                                    fullWidth
+                                    inputProps={{
+                                        style: {
+                                            color: 'white',
+                                        },
+                                    }}
+                                    style={{
+                                        color: 'white',
+                                    }}
+                                />
+                                <IconButton
+                                    disabled={peerIdInput.length < 10}
+                                    onClick={startNewConnection}
+                                >
+                                    <Plus />
+                                </IconButton>
+                            </ListItem>
+                            {peerClient.getConnections().map((connection) => (
+                                <ListItem>
+                                    <Typography>{connection.connectionId}</Typography>
+                                    <IconButton
+                                        onClick={() =>
+                                            peerClient.callPeer(
+                                                connection.connectionId,
+                                                renderMedia
+                                            )
+                                        }
+                                    >
+                                        <Phone />
+                                    </IconButton>
+                                    <IconButton>
+                                        <Video />
+                                    </IconButton>
+                                </ListItem>
+                            ))}
+                        </>
                     )}
                 </List>
             </Drawer>
@@ -125,9 +213,16 @@ export default () => {
                             classes.messagesListContainer,
                         )}
                     >
-                        <ListItem>
-                            <Typography variant={'caption'}>username</Typography>
-                        </ListItem>
+                        {mediaStream === null ? (
+                            messages.map((message, index) => (
+                                <ListItem key={index} style={{ color: 'white' }}>
+                                    <Typography variant={'caption'}>username</Typography>
+                                    <Typography>{message}</Typography>
+                                </ListItem>
+                            ))
+                        ) : (
+                            <ReactPlayer url={mediaStream} />
+                        )}
                     </List>
                 ) : (
                     <Box
@@ -138,13 +233,21 @@ export default () => {
                         alignItems={'center'}
                         className={classes.mainBackground}
                     >
-                        <Button onClick={() => initializeClient()}>
-                            Continue as Guest
-                        </Button>
+                        {isLoading ? (
+                            <LinearProgress color={'secondary'} />
+                        ) : (
+                            <Button onClick={() => initializeClient()}>
+                                Continue as Guest
+                            </Button>
+                        )}
                     </Box>
                 )}
                 <Box padding={1} className={classes.messageBox}>
                     <TextField
+                        id={'messageInput'}
+                        name={'messageInput'}
+                        value={messageInput}
+                        onChange={(event) => setMessageInput(event.target.value)}
                         multiline
                         rows={2}
                         variant={'outlined'}
@@ -157,9 +260,10 @@ export default () => {
                         }}
                     />
                     <Button
-                        disabled={!clientInitialized}
+                        disabled={!clientInitialized || messageInput.length <= 0}
                         variant={'outlined'}
                         style={{ color: 'red' }}
+                        onClick={sendMessage}
                     >
                         Send
                     </Button>
