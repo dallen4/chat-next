@@ -1,12 +1,14 @@
 import { createMuiTheme } from '@material-ui/core';
+import { TypographyOptions } from '@material-ui/core/styles/createTypography';
 
 const theme = createMuiTheme({
     palette: {
         primary: {
-            main: '#FF5301',
+            main: 'rgb(39,44,53)',
+            light: 'rgb(39,44,53, 0.8)',
         },
         secondary: {
-            main: '#052E54',
+            main: 'rgb(32,37,44)',
             light: '#365775',
         },
         common: {
