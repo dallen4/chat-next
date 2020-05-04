@@ -114,9 +114,9 @@ export default class PeerClient {
         ) {
             navigator.getUserMedia(
                 {
-                    // video: {
-                    //     facingMode: 'user',
-                    // },
+                    video: {
+                        facingMode: 'user',
+                    },
                     audio: true,
                 },
                 streamHandler,
@@ -125,9 +125,9 @@ export default class PeerClient {
         } else {
             navigator.mediaDevices
                 .getUserMedia({
-                    // video: {
-                    //     facingMode: 'user',
-                    // },
+                    video: {
+                        facingMode: 'user',
+                    },
                     audio: true,
                 })
                 .then(streamHandler)

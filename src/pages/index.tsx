@@ -221,7 +221,7 @@ export default () => {
                                 </ListItem>
                             ))
                         ) : (
-                            <ReactPlayer url={mediaStream} />
+                            <ReactPlayer url={mediaStream} playing={true}/>
                         )}
                     </List>
                 ) : (
