@@ -1,5 +1,5 @@
 import { isClient } from 'config';
-import { PeerUtils, ConnectionMap, ConnectionInstance } from 'types/peer';
+import { PeerUtils, ConnectionMap, ConnectionInstance, PeerHanlders, Message } from 'types/peer';
 import Peer from 'peerjs';
 
 export default class PeerClient {
@@ -13,9 +13,15 @@ export default class PeerClient {
         this.mediaStream = null;
     }
 
-    async init(onNewConnection: any, onMessageReceived: any, onMediaReceived: any) {
+    async init(handlers: PeerHanlders) {
         if (isClient) {
             const { initPeer }: PeerUtils = require('.');
+            const {
+                onNewConnection,
+                onMessageReceived,
+                onRemoteMediaReceived,
+            } = handlers;
+
             return new Promise((resolve, reject) => {
                 this.peerClient = initPeer();
 
@@ -30,7 +36,10 @@ export default class PeerClient {
                         onNewConnection(this.connections[connection.peer]);
                     });
 
-                    connection.on('data', onMessageReceived);
+                    connection.on('data', data => {
+                        this.connections[connection.peer].messages.push(data);
+                        onMessageReceived([...this.connections[connection.peer].messages] as any);
+                    });
                 });
 
                 this.peerClient.on('call', (call) => {
@@ -42,7 +51,7 @@ export default class PeerClient {
                         this.requestMedia(
                             (stream: MediaStream) => {
                                 call.answer(stream);
-                                call.on('stream', onMediaReceived);
+                                call.on('stream', onRemoteMediaReceived);
                             },
                             (err: MediaStream) => {
                                 console.error(err);
@@ -52,7 +61,14 @@ export default class PeerClient {
                     }
                 });
 
-                this.peerClient.on('error', (error) => console.error(error));
+                this.peerClient.on('error', (error) => {
+                    console.error(error);
+                    alert('Error occurred');
+                });
+
+                this.peerClient.on('disconnected', () => {
+                    this.peerClient.reconnect();
+                });
 
                 this.peerClient.on('open', (id: string) => {
                     resolve();
@@ -101,6 +117,16 @@ export default class PeerClient {
         });
     }
 
+    pushMessage = (peerId: string, message: Message) => {
+        this.connections[peerId].messages.push(message);
+        return [...this.connections[peerId].messages];
+    };
+
+    sendMessage = (peerId: string, message: Message) => {
+        this.connections[peerId].client.send(message);
+        return this.pushMessage(peerId, message);
+    };
+
     requestMedia = (streamHandler: any, errorHandler: any) => {
         const contraintOptions: MediaStreamConstraints = {
             video: {
@@ -133,11 +159,11 @@ export default class PeerClient {
         }
     };
 
-    callPeer(peerId: string, onMediaReceived: any) {
+    callPeer(peerId: string, onRemoteMediaReceived: any) {
         this.requestMedia(
             (stream: MediaStream) => {
                 const call = this.peerClient.call(peerId, stream);
-                call.on('stream', onMediaReceived);
+                call.on('stream', onRemoteMediaReceived);
             },
             (err: MediaStream) => {
                 console.error(err);

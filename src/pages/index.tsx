@@ -14,12 +14,14 @@ import {
     Typography,
     LinearProgress,
     IconButton,
+    useTheme,
 } from '@material-ui/core';
 import { PeerClientContext } from 'contexts/PeerClientContext';
 import { Plus, Phone, Video } from 'mdi-material-ui';
 import clsx from 'clsx';
 import { ConnectionInstance } from 'types/peer';
 import ReactPlayer from 'react-player';
+import StatusIndicator from 'atoms/StatusIndicator';
 
 const drawerWidth = 280;
 
@@ -38,7 +40,7 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         drawerPaper: {
             width: drawerWidth,
-            backgroundColor: theme.palette.primary.main,
+            backgroundColor: theme.palette.secondary.main,
         },
         // necessary for content to be below app bar
         toolbar: theme.mixins.toolbar,
@@ -47,7 +49,7 @@ const useStyles = makeStyles((theme: Theme) =>
             height: '100vh',
             maxHeight: '100vh',
             flexGrow: 1,
-            backgroundColor: theme.palette.background.default,
+            backgroundColor: theme.palette.secondary.main,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
@@ -85,6 +87,8 @@ const useStyles = makeStyles((theme: Theme) =>
 export default () => {
     const classes = useStyles();
 
+    const theme = useTheme();
+
     const peerClient = useContext(PeerClientContext);
 
     const [currentConnection, setCurrentConnection] = React.useState<ConnectionInstance>(
@@ -98,11 +102,19 @@ export default () => {
     const [messageInput, setMessageInput] = React.useState('');
     const [messages, setMessages] = React.useState([]);
 
-    const [mediaStream, setMediaStream] = React.useState<string>(null);
+    const [remoteMediaStream, setRemoteMediaStream] = React.useState<MediaStream>(null);
+    const [localMediaStream, setLocalMediaStreeam] = React.useState<MediaStream>(null);
 
     const initializeClient = async () => {
         setIsLoading(true);
-        await peerClient.init(setCurrentConnection, addMessage, renderMedia);
+        await peerClient.init({
+            onNewConnection: setCurrentConnection,
+            onMessageReceived: (data) => {
+                const temp = peerClient.getConnections()[0];
+                setMessages([...temp.messages]);
+            },
+            onRemoteMediaReceived: setRemoteMediaStream,
+        });
         setInitialized(true);
         setIsLoading(false);
     };
@@ -116,20 +128,21 @@ export default () => {
 
     const startNewConnection = async () => {
         const connection = await peerClient.createConnection(peerIdInput);
-        connection.client.on('data', addMessage);
+        connection.client.on('data', (data) => {
+            const tempConnection = peerClient.getConnection(connection.peerId);
+            tempConnection.messages.push(data);
+            setMessages([...tempConnection.messages]);
+        });
         setCurrentConnection(connection);
         setPeerIdInput('');
     };
 
     const sendMessage = async () => {
         currentConnection.client.send(messageInput);
-        addMessage(messageInput);
+        currentConnection.messages.push(messageInput);
+        setMessages([...currentConnection.messages]);
         setMessageInput('');
     };
-
-    const renderMedia = (stream: any) => {
-        setMediaStream(stream);
-    }
 
     return (
         <div className={classes.root}>
@@ -141,7 +154,15 @@ export default () => {
             >
                 <Toolbar className={classes.drawerToolbarContent}>
                     <Typography variant={'body1'}>
-                        Status: {clientInitialized ? 'Ready' : 'Offline'}
+                        Status: {clientInitialized ? 'Ready' : 'Offline'}{' '}
+                        <StatusIndicator
+                            status={
+                                (peerClient.peerClient &&
+                                    peerClient.peerClient.disconnected) === null
+                                    ? 'offline'
+                                    : 'online'
+                            }
+                        />
                     </Typography>
                     {clientInitialized && <Typography>ID: {peerClient.id}</Typography>}
                 </Toolbar>
@@ -161,20 +182,19 @@ export default () => {
                                     placeholder={'Peer ID'}
                                     disabled={!clientInitialized}
                                     fullWidth
-                                    inputProps={{
-                                        style: {
-                                            color: 'white',
-                                        },
-                                    }}
-                                    style={{
-                                        color: 'white',
-                                    }}
                                 />
                                 <IconButton
                                     disabled={peerIdInput.length < 10}
                                     onClick={startNewConnection}
                                 >
-                                    <Plus />
+                                    <Plus
+                                        style={{
+                                            color:
+                                                peerIdInput.length < 10
+                                                    ? theme.palette.secondary.light
+                                                    : 'white',
+                                        }}
+                                    />
                                 </IconButton>
                             </ListItem>
                             {peerClient.getConnections().map((connection) => (
@@ -184,7 +204,7 @@ export default () => {
                                         onClick={() =>
                                             peerClient.callPeer(
                                                 connection.connectionId,
-                                                renderMedia
+                                                setRemoteMediaStream,
                                             )
                                         }
                                     >
@@ -199,7 +219,7 @@ export default () => {
                     )}
                 </List>
             </Drawer>
-            <AppBar className={classes.appBar}>
+            <AppBar color={'secondary'} className={classes.appBar}>
                 <Toolbar>
                     <h2>chat</h2>
                 </Toolbar>
@@ -213,7 +233,7 @@ export default () => {
                             classes.messagesListContainer,
                         )}
                     >
-                        {mediaStream === null ? (
+                        {localMediaStream === null ? (
                             messages.map((message, index) => (
                                 <ListItem key={index} style={{ color: 'white' }}>
                                     <Typography variant={'caption'}>username</Typography>
@@ -221,7 +241,7 @@ export default () => {
                                 </ListItem>
                             ))
                         ) : (
-                            <ReactPlayer url={mediaStream} playing={true}/>
+                            <ReactPlayer url={localMediaStream} playing={true} />
                         )}
                     </List>
                 ) : (
@@ -236,7 +256,12 @@ export default () => {
                         {isLoading ? (
                             <LinearProgress color={'secondary'} />
                         ) : (
-                            <Button onClick={() => initializeClient()}>
+                            <Button
+                                color={'primary'}
+                                variant={'contained'}
+                                style={{ color: 'white' }}
+                                onClick={() => initializeClient()}
+                            >
                                 Continue as Guest
                             </Button>
                         )}
@@ -255,15 +280,17 @@ export default () => {
                         placeholder={'Type your words here...'}
                         disabled={!clientInitialized}
                         fullWidth
-                        style={{
-                            color: 'white',
-                        }}
+                        style={{ marginRight: '0.5rem' }}
                     />
                     <Button
                         disabled={!clientInitialized || messageInput.length <= 0}
-                        variant={'outlined'}
-                        style={{ color: 'red' }}
+                        variant={'contained'}
+                        color={'primary'}
                         onClick={sendMessage}
+                        style={{
+                            height: '75px',
+                            width: '75px',
+                        }}
                     >
                         Send
                     </Button>
