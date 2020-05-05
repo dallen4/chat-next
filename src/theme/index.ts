@@ -4,15 +4,19 @@ import { TypographyOptions } from '@material-ui/core/styles/createTypography';
 const theme = createMuiTheme({
     palette: {
         primary: {
-            main: 'rgb(39,44,53)',
+            main: '#3373ff',
             light: 'rgb(39,44,53, 0.8)',
         },
         secondary: {
-            main: 'rgb(32,37,44)',
-            light: '#365775',
+            main: '#3a3c43',
+            light: '#4c4f59',
+        },
+        background: {
+            default: '#12151c',
+            paper: '#191c23',
         },
         common: {
-            black: '',
+            black: '#000000',
             white: '#FFFFFF',
         },
         custom: {
@@ -23,6 +27,22 @@ const theme = createMuiTheme({
             footer: {
                 dark: '#1B2024',
                 light: '#23282C',
+            },
+        },
+        system: {
+            error: '#f02733',
+            warning: '#ffbe33',
+            info: '#5833ff',
+            success: '#2da897',
+        },
+    },
+    overrides: {
+        MuiInputBase: {
+            input: {
+                '&::placeholder': {
+                    color: 'white',
+                },
+                color: 'white',
             },
         },
     },
