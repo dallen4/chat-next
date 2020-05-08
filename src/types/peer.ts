@@ -8,7 +8,10 @@ export interface ConnectionInstance {
     peerId?: string;
     client: Peer.DataConnection;
     messages: Array<any>;
+    call?: Peer.MediaConnection;
 }
+
+export type PeerStatus = 'offline' | 'error' | 'pending' | 'online';
 
 export interface ConnectionMap {
     [key: string]: ConnectionInstance;
