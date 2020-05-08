@@ -1,9 +1,10 @@
 import React from 'react';
 import clsx from 'clsx';
 import useStyles from './styles';
+import { PeerStatus } from 'types/peer';
 
 export type StatusIndicatorPropTypes = {
-    status: 'offline' | 'error' | 'pending' | 'online';
+    status: PeerStatus;
 };
 
 const StatusIndicator = (props: StatusIndicatorPropTypes) => {
