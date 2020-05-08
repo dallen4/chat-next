@@ -15,11 +15,13 @@ import {
     LinearProgress,
     IconButton,
     useTheme,
+    CircularProgress,
+    ButtonGroup,
 } from '@material-ui/core';
 import { PeerClientContext } from 'contexts/PeerClientContext';
-import { Plus, Phone, Video } from 'mdi-material-ui';
+import { Plus, Phone, Video, Chat, PhoneHangup } from 'mdi-material-ui';
 import clsx from 'clsx';
-import { ConnectionInstance } from 'types/peer';
+import { ConnectionInstance, PeerStatus } from 'types/peer';
 import ReactPlayer from 'react-player';
 import StatusIndicator from 'atoms/StatusIndicator';
 
@@ -41,6 +43,9 @@ const useStyles = makeStyles((theme: Theme) =>
         drawerPaper: {
             width: drawerWidth,
             backgroundColor: theme.palette.secondary.main,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
         },
         // necessary for content to be below app bar
         toolbar: theme.mixins.toolbar,
@@ -54,7 +59,10 @@ const useStyles = makeStyles((theme: Theme) =>
             flexDirection: 'column',
             justifyContent: 'flex-start',
         },
-        mainBackground: {
+        mainContainer: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             backgroundColor: theme.palette.secondary.main,
         },
         messagesListContainer: {
@@ -74,12 +82,19 @@ const useStyles = makeStyles((theme: Theme) =>
         drawerToolbarContent: {
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             alignItems: 'flex-start',
             color: 'white',
         },
         white: {
             color: 'white',
+        },
+        primary: {
+            color: theme.palette.primary.main,
+        },
+        mediaToggleIcons: {
+            fontSize: '1.1rem',
+            color: theme.palette.primary.main,
         },
     }),
 );
@@ -109,30 +124,15 @@ export default () => {
         setIsLoading(true);
         await peerClient.init({
             onNewConnection: setCurrentConnection,
-            onMessageReceived: (data) => {
-                const temp = peerClient.getConnections()[0];
-                setMessages([...temp.messages]);
-            },
+            onMessageReceived: setMessages as any,
             onRemoteMediaReceived: setRemoteMediaStream,
         });
         setInitialized(true);
         setIsLoading(false);
     };
 
-    const addMessage = (message: string) => {
-        console.log(messages);
-        const newMessages = [...messages, message];
-        console.log(newMessages);
-        setMessages(newMessages);
-    };
-
     const startNewConnection = async () => {
-        const connection = await peerClient.createConnection(peerIdInput);
-        connection.client.on('data', (data) => {
-            const tempConnection = peerClient.getConnection(connection.peerId);
-            tempConnection.messages.push(data);
-            setMessages([...tempConnection.messages]);
-        });
+        const connection = await peerClient.createConnection(peerIdInput, setMessages);
         setCurrentConnection(connection);
         setPeerIdInput('');
     };
@@ -140,32 +140,57 @@ export default () => {
     const sendMessage = async () => {
         currentConnection.client.send(messageInput);
         currentConnection.messages.push(messageInput);
+
         setMessages([...currentConnection.messages]);
         setMessageInput('');
     };
 
-    return (
-        <div className={classes.root}>
-            <Drawer
-                variant={'permanent'}
-                anchor={'left'}
-                className={classes.drawer}
-                classes={{ paper: classes.drawerPaper }}
-            >
-                <Toolbar className={classes.drawerToolbarContent}>
-                    <Typography variant={'body1'}>
-                        Status: {clientInitialized ? 'Ready' : 'Offline'}{' '}
-                        <StatusIndicator
-                            status={
-                                (peerClient.peerClient &&
-                                    peerClient.peerClient.disconnected) === null
-                                    ? 'offline'
-                                    : 'online'
-                            }
-                        />
-                    </Typography>
-                    {clientInitialized && <Typography>ID: {peerClient.id}</Typography>}
-                </Toolbar>
+    const StatusBar = ({ status }: { status: PeerStatus }) => (
+        <Toolbar className={classes.drawerToolbarContent}>
+            <Typography variant={'body1'}>
+                Status: {status === 'online' ? 'Ready' : 'Offline'}{' '}
+                <StatusIndicator status={status} />
+            </Typography>
+        </Toolbar>
+    );
+
+    const MediaViewSelector = () => (
+        <ButtonGroup disableElevation>
+            <Button className={classes.primary} style={{ fontSize: '0.9rem' }}>
+                Both
+            </Button>
+            <Button variant={'contained'}>
+                <Chat className={classes.mediaToggleIcons} />
+            </Button>
+            <Button>
+                <Video className={classes.mediaToggleIcons} />
+            </Button>
+        </ButtonGroup>
+    );
+
+    const DrawerVideoFeed = () =>
+        localMediaStream !== null && (
+            <ReactPlayer
+                width={'100%'}
+                height={'30%'}
+                style={{}}
+                url={localMediaStream}
+            />
+        );
+
+    const Sidebar = () => (
+        <Drawer
+            variant={'permanent'}
+            anchor={'left'}
+            className={classes.drawer}
+            classes={{ paper: classes.drawerPaper }}
+        >
+            <div>
+                <StatusBar
+                    status={
+                        clientInitialized ? 'online' : isLoading ? 'pending' : 'offline'
+                    }
+                />
                 <List style={{ color: 'white' }}>
                     {clientInitialized && (
                         <>
@@ -205,12 +230,20 @@ export default () => {
                                             peerClient.callPeer(
                                                 connection.connectionId,
                                                 setRemoteMediaStream,
+                                                true,
                                             )
                                         }
                                     >
                                         <Phone />
                                     </IconButton>
-                                    <IconButton>
+                                    <IconButton
+                                        onClick={() =>
+                                            peerClient.callPeer(
+                                                connection.connectionId,
+                                                setRemoteMediaStream,
+                                            )
+                                        }
+                                    >
                                         <Video />
                                     </IconButton>
                                 </ListItem>
@@ -218,83 +251,113 @@ export default () => {
                         </>
                     )}
                 </List>
-            </Drawer>
+            </div>
+            <DrawerVideoFeed />
+        </Drawer>
+    );
+
+    return (
+        <div className={classes.root}>
+            <Sidebar />
             <AppBar color={'secondary'} className={classes.appBar}>
-                <Toolbar>
-                    <h2>chat</h2>
+                <Toolbar
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}
+                >
+                    <MediaViewSelector />
+                    {clientInitialized ? (
+                        <Typography>ID: {peerClient.id}</Typography>
+                    ) : (
+                        <Button
+                            color={'primary'}
+                            variant={'contained'}
+                            style={{ color: 'white', width: '180px', height: '36px' }}
+                            onClick={initializeClient}
+                        >
+                            {isLoading ? (
+                                <CircularProgress color={'inherit'} size={'14px'} />
+                            ) : (
+                                'Continue as Guest'
+                            )}
+                        </Button>
+                    )}
                 </Toolbar>
             </AppBar>
             <main className={classes.content}>
                 <div className={classes.toolbar} />
-                {clientInitialized ? (
-                    <List
-                        className={clsx(
-                            classes.mainBackground,
-                            classes.messagesListContainer,
-                        )}
-                    >
-                        {localMediaStream === null ? (
-                            messages.map((message, index) => (
-                                <ListItem key={index} style={{ color: 'white' }}>
-                                    <Typography variant={'caption'}>username</Typography>
-                                    <Typography>{message}</Typography>
-                                </ListItem>
-                            ))
-                        ) : (
-                            <ReactPlayer url={localMediaStream} playing={true} />
-                        )}
-                    </List>
-                ) : (
-                    <Box
-                        flex={1}
-                        display={'flex'}
-                        flexDirection={'row'}
-                        justifyContent={'center'}
-                        alignItems={'center'}
-                        className={classes.mainBackground}
-                    >
-                        {isLoading ? (
-                            <LinearProgress color={'secondary'} />
-                        ) : (
-                            <Button
-                                color={'primary'}
-                                variant={'contained'}
-                                style={{ color: 'white' }}
-                                onClick={() => initializeClient()}
+                <div className={classes.mainContainer}>
+                    {remoteMediaStream === null ? (
+                        <>
+                            <List className={classes.messagesListContainer}>
+                                {messages.map((message, index) => (
+                                    <ListItem key={index} style={{ color: 'white' }}>
+                                        <Typography variant={'caption'}>
+                                            username
+                                        </Typography>
+                                        <Typography>{message}</Typography>
+                                    </ListItem>
+                                ))}
+                            </List>
+                            <Box padding={1} className={classes.messageBox}>
+                                <TextField
+                                    id={'messageInput'}
+                                    name={'messageInput'}
+                                    value={messageInput}
+                                    onChange={(event) =>
+                                        setMessageInput(event.target.value)
+                                    }
+                                    multiline
+                                    rows={2}
+                                    variant={'outlined'}
+                                    color={'primary'}
+                                    placeholder={'Type your words here...'}
+                                    disabled={!clientInitialized}
+                                    fullWidth
+                                    style={{ marginRight: '0.5rem' }}
+                                />
+                                <Button
+                                    disabled={
+                                        !clientInitialized || messageInput.length <= 0
+                                    }
+                                    variant={'contained'}
+                                    color={'primary'}
+                                    onClick={sendMessage}
+                                    style={{
+                                        height: '75px',
+                                        width: '75px',
+                                    }}
+                                >
+                                    Send
+                                </Button>
+                            </Box>
+                        </>
+                    ) : (
+                        <Box flex={1} height={'100%'}>
+                            <ReactPlayer
+                                width={'100%'}
+                                height={'85%'}
+                                controls
+                                url={remoteMediaStream}
+                                playing={true}
+                            />
+                            <Box
+                                height={'15%'}
+                                display={'flex'}
+                                flexDirection={'column'}
+                                justifyContent={'center'}
+                                alignItems={'center'}
                             >
-                                Continue as Guest
-                            </Button>
-                        )}
-                    </Box>
-                )}
-                <Box padding={1} className={classes.messageBox}>
-                    <TextField
-                        id={'messageInput'}
-                        name={'messageInput'}
-                        value={messageInput}
-                        onChange={(event) => setMessageInput(event.target.value)}
-                        multiline
-                        rows={2}
-                        variant={'outlined'}
-                        color={'primary'}
-                        placeholder={'Type your words here...'}
-                        disabled={!clientInitialized}
-                        fullWidth
-                        style={{ marginRight: '0.5rem' }}
-                    />
-                    <Button
-                        disabled={!clientInitialized || messageInput.length <= 0}
-                        variant={'contained'}
-                        color={'primary'}
-                        onClick={sendMessage}
-                        style={{
-                            height: '75px',
-                            width: '75px',
-                        }}
-                    >
-                        Send
-                    </Button>
-                </Box>
+                                <IconButton style={{ backgroundColor: 'red' }}>
+                                    <PhoneHangup className={classes.white} />
+                                </IconButton>
+                            </Box>
+                        </Box>
+                    )}
+                </div>
             </main>
         </div>
     );
