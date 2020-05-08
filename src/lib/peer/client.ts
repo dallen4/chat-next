@@ -1,5 +1,11 @@
 import { isClient } from 'config';
-import { PeerUtils, ConnectionMap, ConnectionInstance, PeerHanlders, Message } from 'types/peer';
+import {
+    PeerUtils,
+    ConnectionMap,
+    ConnectionInstance,
+    PeerHanlders,
+    Message,
+} from 'types/peer';
 import Peer from 'peerjs';
 
 export default class PeerClient {
@@ -36,9 +42,9 @@ export default class PeerClient {
                         onNewConnection(this.connections[connection.peer]);
                     });
 
-                    connection.on('data', data => {
-                        this.connections[connection.peer].messages.push(data);
-                        onMessageReceived([...this.connections[connection.peer].messages] as any);
+                    connection.on('data', (data) => {
+                        const updatedMessages = this.pushMessage(connection.peer, data);
+                        onMessageReceived(updatedMessages as any);
                     });
                 });
 
@@ -52,9 +58,13 @@ export default class PeerClient {
                             (stream: MediaStream) => {
                                 call.answer(stream);
                                 call.on('stream', onRemoteMediaReceived);
+                                call.on('close', () =>
+                                    alert(`Call with ${call.peer} ended`),
+                                );
                             },
-                            (err: MediaStream) => {
+                            (err: any) => {
                                 console.error(err);
+                                alert('Error occurred');
                                 call.close();
                             },
                         );
@@ -71,7 +81,7 @@ export default class PeerClient {
                 });
 
                 this.peerClient.on('open', (id: string) => {
-                    resolve();
+                    resolve(id);
                 });
             });
         }
@@ -96,16 +106,22 @@ export default class PeerClient {
         return this.peerClient ? this.peerClient.id : null;
     }
 
-    async createConnection(peerId: string) {
+    async createConnection(peerId: string, onMessageReceived: any) {
         const client = this.peerClient.connect(peerId);
+
+        this.connections[peerId] = {
+            client,
+            messages: [],
+        };
+
+        client.on('data', (data) => {
+            const updatedMessages = this.pushMessage(peerId, data);
+            onMessageReceived(updatedMessages);
+        });
 
         return new Promise<ConnectionInstance>((resolve, reject) => {
             client.on('open', () => {
                 console.log('connection open with ', peerId);
-                this.connections[peerId] = {
-                    client,
-                    messages: [],
-                };
 
                 client.send(`${this.peerClient.id} has joined the chat`);
 
@@ -127,8 +143,13 @@ export default class PeerClient {
         return this.pushMessage(peerId, message);
     };
 
-    requestMedia = (streamHandler: any, errorHandler: any) => {
-        const contraintOptions: MediaStreamConstraints = {
+    requestMedia = (streamHandler: any, errorHandler: any, audioOnly = false) => {
+        if (this.mediaStream) {
+            streamHandler(this.mediaStream);
+            return;
+        }
+
+        const constraintOptions: MediaStreamConstraints = {
             video: {
                 facingMode: 'user',
                 width: {
@@ -141,6 +162,8 @@ export default class PeerClient {
             audio: true,
         };
 
+        if (audioOnly) constraintOptions.video = false;
+
         if (
             typeof navigator.mediaDevices === 'undefined' ||
             typeof navigator.mediaDevices.getUserMedia === 'undefined'
@@ -148,27 +171,54 @@ export default class PeerClient {
             navigator.getUserMedia =
                 navigator.getUserMedia ||
                 navigator.webkitGetUserMedia ||
-                navigator.mozGetUserMedia;
+                navigator.mozGetUserMedia ||
+                navigator.msGetUserMedia;
 
-            navigator.getUserMedia(contraintOptions, streamHandler, errorHandler);
+            navigator.getUserMedia(constraintOptions, streamHandler, errorHandler);
         } else {
             navigator.mediaDevices
-                .getUserMedia(contraintOptions)
+                .getUserMedia(constraintOptions)
                 .then(streamHandler)
                 .catch(errorHandler);
         }
     };
 
-    callPeer(peerId: string, onRemoteMediaReceived: any) {
+    callPeer(peerId: string, onRemoteMediaReceived: any, audioOnly = false) {
         this.requestMedia(
             (stream: MediaStream) => {
                 const call = this.peerClient.call(peerId, stream);
+
                 call.on('stream', onRemoteMediaReceived);
+                call.on('close', () => {
+                    delete this.connections[peerId].call;
+                });
+                call.on('error', console.error);
+
+                this.connections[peerId].call = call;
             },
-            (err: MediaStream) => {
+            (err: any) => {
                 console.error(err);
                 alert('call failed');
             },
+            audioOnly
         );
+    }
+
+    endCall(peerId: string, onCallEnded?: any) {
+        if (this.connections[peerId].call) this.connections[peerId].call.close();
+
+        if (this.mediaStream) {
+            const tracks = this.mediaStream.getTracks();
+
+            const stoppedTracks = tracks.map((track) => {
+                track.stop();
+                return true;
+            });
+
+            if (stoppedTracks.length === tracks.length)
+                this.mediaStream = null;
+        }
+
+        if (onCallEnded) onCallEnded();
     }
 }
