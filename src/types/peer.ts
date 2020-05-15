@@ -23,4 +23,5 @@ export interface PeerHanlders {
     onNewConnection: (connection: ConnectionInstance) => void;
     onMessageReceived: (message: Message) => void;
     onRemoteMediaReceived: (stream: MediaStream) => void;
+    onLocalMediaStreamStarted: (stream: MediaStream) => void;
 }
