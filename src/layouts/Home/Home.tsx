@@ -201,79 +201,6 @@ const Home = () => {
             />
         );
 
-    const MediaView = () => (
-        <main className={classes.mainContainer}>
-            {remoteMediaStream === null ? (
-                <>
-                    <List className={classes.messagesListContainer}>
-                        {messages.map((message, index) => (
-                            <ListItem key={index} style={{ color: 'white' }}>
-                                <Typography variant={'caption'}>username</Typography>
-                                <Typography>{message}</Typography>
-                            </ListItem>
-                        ))}
-                    </List>
-                    <Box padding={1} className={classes.messageBox}>
-                        <TextField
-                            id={'messageInput'}
-                            name={'messageInput'}
-                            value={messageInput}
-                            onChange={(event) => setMessageInput(event.target.value)}
-                            multiline
-                            rows={2}
-                            variant={'outlined'}
-                            color={'primary'}
-                            placeholder={'Type your words here...'}
-                            disabled={!clientInitialized}
-                            fullWidth
-                            style={{ marginRight: '0.5rem' }}
-                        />
-                        <Button
-                            disabled={!clientInitialized || messageInput.length <= 0}
-                            variant={'contained'}
-                            color={'primary'}
-                            onClick={sendMessage}
-                            style={{
-                                height: '75px',
-                                width: '75px',
-                            }}
-                        >
-                            Send
-                        </Button>
-                    </Box>
-                </>
-            ) : (
-                <Box flex={1} height={'100%'}>
-                    <ReactPlayer
-                        width={'100%'}
-                        height={'85%'}
-                        controls
-                        url={remoteMediaStream}
-                        playing={true}
-                    />
-                    <Box
-                        height={'15%'}
-                        display={'flex'}
-                        flexDirection={'column'}
-                        justifyContent={'center'}
-                        alignItems={'center'}
-                    >
-                        <IconButton
-                            onClick={() =>
-                                peerClient.endCall(currentConnection.peerId, () =>
-                                    setRemoteMediaStream(null),
-                                )
-                            }
-                            style={{ backgroundColor: 'red' }}
-                        >
-                            <PhoneHangup className={classes.white} />
-                        </IconButton>
-                    </Box>
-                </Box>
-            )}
-        </main>
-    );
-
     return (
         <div className={classes.root}>
             <Sidebar />
@@ -302,7 +229,82 @@ const Home = () => {
             </AppBar>
             <div className={classes.content}>
                 <div className={classes.toolbarSpacer} />
-                <MediaView />
+                <main className={classes.mainContainer}>
+                    {remoteMediaStream === null ? (
+                        <>
+                            <List className={classes.messagesListContainer}>
+                                {messages.map((message, index) => (
+                                    <ListItem key={index} style={{ color: 'white' }}>
+                                        <Typography variant={'caption'}>
+                                            username
+                                        </Typography>
+                                        <Typography>{message}</Typography>
+                                    </ListItem>
+                                ))}
+                            </List>
+                            <Box padding={1} className={classes.messageBox}>
+                                <TextField
+                                    id={'messageInput'}
+                                    name={'messageInput'}
+                                    value={messageInput}
+                                    onChange={(event) =>
+                                        setMessageInput(event.target.value)
+                                    }
+                                    multiline
+                                    rows={2}
+                                    variant={'outlined'}
+                                    color={'primary'}
+                                    placeholder={'Type your words here...'}
+                                    disabled={!clientInitialized}
+                                    fullWidth
+                                    style={{ marginRight: '0.5rem' }}
+                                />
+                                <Button
+                                    disabled={
+                                        !clientInitialized || messageInput.length <= 0
+                                    }
+                                    variant={'contained'}
+                                    color={'primary'}
+                                    onClick={sendMessage}
+                                    style={{
+                                        height: '75px',
+                                        width: '75px',
+                                    }}
+                                >
+                                    Send
+                                </Button>
+                            </Box>
+                        </>
+                    ) : (
+                        <Box flex={1} height={'100%'}>
+                            <ReactPlayer
+                                width={'100%'}
+                                height={'85%'}
+                                controls
+                                url={remoteMediaStream}
+                                playing={true}
+                            />
+                            <Box
+                                height={'15%'}
+                                display={'flex'}
+                                flexDirection={'column'}
+                                justifyContent={'center'}
+                                alignItems={'center'}
+                            >
+                                <IconButton
+                                    onClick={() =>
+                                        peerClient.endCall(currentConnection.peerId, () =>
+                                            setRemoteMediaStream(null),
+                                        )
+                                    }
+                                    style={{ backgroundColor: 'red' }}
+                                >
+                                    <PhoneHangup className={classes.white} />
+                                </IconButton>
+                            </Box>
+                        </Box>
+                    )}
+                </main>
             </div>
         </div>
     );
