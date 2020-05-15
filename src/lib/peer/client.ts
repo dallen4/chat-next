@@ -26,6 +26,7 @@ export default class PeerClient {
                 onNewConnection,
                 onMessageReceived,
                 onRemoteMediaReceived,
+                onLocalMediaStreamStarted,
             } = handlers;
 
             return new Promise((resolve, reject) => {
@@ -56,6 +57,7 @@ export default class PeerClient {
                     ) {
                         this.requestMedia(
                             (stream: MediaStream) => {
+                                onLocalMediaStreamStarted(stream);
                                 call.answer(stream);
                                 call.on('stream', onRemoteMediaReceived);
                                 call.on('close', () =>
@@ -183,9 +185,10 @@ export default class PeerClient {
         }
     };
 
-    callPeer(peerId: string, onRemoteMediaReceived: any, audioOnly = false) {
+    callPeer(peerId: string, onRemoteMediaReceived: any, onLocalMediaStreamStarted: any, audioOnly = false) {
         this.requestMedia(
             (stream: MediaStream) => {
+                onLocalMediaStreamStarted(stream);
                 const call = this.peerClient.call(peerId, stream);
 
                 call.on('stream', onRemoteMediaReceived);
