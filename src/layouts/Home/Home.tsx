@@ -27,9 +27,8 @@ const Home = () => {
 
     const peerClient = useContext(PeerClientContext);
 
-    const [currentConnection, setCurrentConnection] = React.useState<ConnectionInstance>(
-        null,
-    );
+    const [currentConnection, setCurrentConnection] =
+        React.useState<ConnectionInstance>(null);
 
     const [isLoading, setIsLoading] = React.useState(false);
     const [clientInitialized, setInitialized] = React.useState(false);
@@ -158,7 +157,14 @@ const Home = () => {
                     )}
                 </List>
             </div>
-            <DrawerVideoFeed />
+            {localMediaStream !== null && (
+                <ReactPlayer
+                    width={'100%'}
+                    height={'30%'}
+                    style={{}}
+                    url={localMediaStream}
+                />
+            )}
         </Drawer>
     );
 
@@ -190,16 +196,6 @@ const Home = () => {
             )}
         </ButtonGroup>
     );
-
-    const DrawerVideoFeed = () =>
-        localMediaStream !== null && (
-            <ReactPlayer
-                width={'100%'}
-                height={'30%'}
-                style={{}}
-                url={localMediaStream}
-            />
-        );
 
     const MediaView = () => (
         <main className={classes.mainContainer}>
