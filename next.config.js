@@ -13,6 +13,5 @@ module.exports = withSourceMaps({
 
         return config;
     },
-    target: 'serverless',
     env: {},
 });
