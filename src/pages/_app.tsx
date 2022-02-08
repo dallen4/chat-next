@@ -7,17 +7,30 @@ import { initGA, logPageView } from 'lib/google/analytics';
 import theme from 'theme';
 import { PeerClientProvider } from 'contexts/PeerClientContext';
 import PeerClient from 'lib/peer/client';
+import OrbitDB from 'orbit-db';
+import { initOrbit } from 'lib/db';
 
 function ChatApp({ Component, pageProps }: AppProps) {
-    const [peerClient, setPeerClient] = React.useState<PeerClient | null>(null);
+    const [peerClient, setPeerClient] = React.useState<PeerClient>(null);
+    const [orbit, setOrbit] = React.useState<OrbitDB>(null);
+    const [profileDB, setProfileDB] = React.useState<any>(null);
+
     const router = useRouter();
 
     React.useEffect(() => {
         initGA();
         logPageView(window.location.pathname);
         router.events.on('routeChangeComplete', logPageView);
+
         setPeerClient(new PeerClient());
+
+        initOrbit().then(setOrbit).catch(console.error);
     }, []);
+
+    const initProfile = async (username: string) => {
+        const newDB = await orbit.keyvalue(username);
+        setProfileDB(newDB);
+    }
 
     return (
         <>
