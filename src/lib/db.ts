@@ -6,6 +6,6 @@ export const initOrbit = async () => {
     const ipfs = await create(ipfsOptions);
 
     const orbit = await OrbitDB.createInstance(ipfs);
-console.log(orbit.identity);
+
     return orbit;
 };

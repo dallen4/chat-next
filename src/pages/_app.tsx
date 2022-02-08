@@ -9,10 +9,13 @@ import { PeerClientProvider } from 'contexts/PeerClientContext';
 import PeerClient from 'lib/peer/client';
 import OrbitDB from 'orbit-db';
 import { initOrbit } from 'lib/db';
+import { generateUsername } from 'lib/util';
+import { NextSeo } from 'next-seo';
 
 function ChatApp({ Component, pageProps }: AppProps) {
     const [peerClient, setPeerClient] = React.useState<PeerClient>(null);
     const [orbit, setOrbit] = React.useState<OrbitDB>(null);
+    const [usernamme, setUsername] = React.useState<string>(null);
     const [profileDB, setProfileDB] = React.useState<any>(null);
 
     const router = useRouter();
@@ -27,13 +30,19 @@ function ChatApp({ Component, pageProps }: AppProps) {
         initOrbit().then(setOrbit).catch(console.error);
     }, []);
 
-    const initProfile = async (username: string) => {
+    const initProfile = async () => {
+        const username = generateUsername();
         const newDB = await orbit.keyvalue(username);
+        setUsername(username);
         setProfileDB(newDB);
     }
 
     return (
         <>
+            <NextSeo
+                title={'uChat'}
+                description={'uChat is a decentralized chat application built with Next.js and OrbitDB.'}
+            />
             <ThemeProvider theme={theme}>
                 <SnackbarProvider>
                     <CssBaseline />
