@@ -21,6 +21,7 @@ import ReactPlayer from 'react-player';
 import StatusIndicator from 'atoms/StatusIndicator';
 import useStyles from './styles';
 import { MediaViewMode } from 'types/core';
+import faker from '@faker-js/faker';
 
 const Home = () => {
     const classes = useStyles();
@@ -44,7 +45,7 @@ const Home = () => {
 
     const initializeClient = async () => {
         setIsLoading(true);
-        await peerClient.init({
+        await peerClient.init(faker.datatype.uuid(), {
             onNewConnection: setCurrentConnection,
             onMessageReceived: setMessages as any,
             onRemoteMediaReceived: setRemoteMediaStream,
