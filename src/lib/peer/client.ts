@@ -19,7 +19,30 @@ export default class PeerClient {
         this.mediaStream = null;
     }
 
-    async init(handlers: PeerHanlders) {
+    async create(id: string) {
+        if (isClient) {
+            const { initPeer }: PeerUtils = require('.');
+
+            return new Promise<Peer>((resolve, reject) => {
+                this.peerClient = initPeer(id);
+
+                this.peerClient.on('error', (error) => {
+                    console.error(error);
+                    alert('Error occurred');
+                });
+
+                this.peerClient.on('disconnected', () => {
+                    this.peerClient.reconnect();
+                });
+
+                this.peerClient.on('open', (id: string) => {
+                    resolve(this.peerClient);
+                });
+            });
+        }
+    }
+
+    async init(id: string, handlers: PeerHanlders) {
         if (isClient) {
             const { initPeer }: PeerUtils = require('.');
             const {
@@ -30,7 +53,7 @@ export default class PeerClient {
             } = handlers;
 
             return new Promise((resolve, reject) => {
-                this.peerClient = initPeer();
+                this.peerClient = initPeer(id);
 
                 this.peerClient.on('connection', (connection: Peer.DataConnection) => {
                     connection.on('open', () => {

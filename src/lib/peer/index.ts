@@ -1,5 +1,5 @@
 import Peer from 'peerjs';
 
-export const initPeer = () => new Peer();
+export const initPeer = (id: string) => new Peer(id);
 
 
