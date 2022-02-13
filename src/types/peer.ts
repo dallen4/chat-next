@@ -1,7 +1,7 @@
 import Peer from 'peerjs';
 
 export interface PeerUtils {
-    initPeer: () => Peer;
+    initPeer: (id: string) => Peer;
 }
 
 export interface ConnectionInstance {
