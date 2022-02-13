@@ -7,9 +7,11 @@ import { initGA, logPageView } from 'lib/google/analytics';
 import theme from 'theme';
 import { PeerClientProvider } from 'contexts/PeerClientContext';
 import PeerClient from 'lib/peer/client';
+import Head from 'next/head';
 
 function ChatApp({ Component, pageProps }: AppProps) {
     const [peerClient, setPeerClient] = React.useState<PeerClient | null>(null);
+
     const router = useRouter();
 
     React.useEffect(() => {
@@ -21,6 +23,12 @@ function ChatApp({ Component, pageProps }: AppProps) {
 
     return (
         <>
+            <Head>
+                <meta
+                    name="viewport"
+                    content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
+                />
+            </Head>
             <ThemeProvider theme={theme}>
                 <SnackbarProvider>
                     <CssBaseline />
