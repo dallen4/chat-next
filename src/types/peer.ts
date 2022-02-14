@@ -2,6 +2,7 @@ import Peer from 'peerjs';
 
 export interface PeerUtils {
     initPeer: (id: string) => Peer;
+    getMediaStream: (audioOnly?: boolean) => Promise<MediaStream>;
 }
 
 export interface ConnectionInstance {
