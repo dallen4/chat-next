@@ -24,20 +24,9 @@ export default class PeerClient {
             const { initPeer }: PeerUtils = require('.');
 
             return new Promise<Peer>((resolve, reject) => {
-                this.peerClient = initPeer(id);
+                const peer = initPeer(id);
 
-                this.peerClient.on('error', (error) => {
-                    console.error(error);
-                    alert('Error occurred');
-                });
-
-                this.peerClient.on('disconnected', () => {
-                    this.peerClient.reconnect();
-                });
-
-                this.peerClient.on('open', (id: string) => {
-                    resolve(this.peerClient);
-                });
+                resolve(peer);
             });
         }
     }
