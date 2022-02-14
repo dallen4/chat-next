@@ -8,6 +8,7 @@ import theme from 'theme';
 import { PeerClientProvider } from 'contexts/PeerClientContext';
 import PeerClient from 'lib/peer/client';
 import Head from 'next/head';
+import { ChatProvider } from 'contexts/ChatContext';
 
 function ChatApp({ Component, pageProps }: AppProps) {
     const [peerClient, setPeerClient] = React.useState<PeerClient | null>(null);
@@ -33,7 +34,9 @@ function ChatApp({ Component, pageProps }: AppProps) {
                 <SnackbarProvider>
                     <CssBaseline />
                     <PeerClientProvider value={peerClient}>
-                        <Component {...pageProps} />
+                        <ChatProvider>
+                            <Component {...pageProps} />
+                        </ChatProvider>
                     </PeerClientProvider>
                 </SnackbarProvider>
             </ThemeProvider>
