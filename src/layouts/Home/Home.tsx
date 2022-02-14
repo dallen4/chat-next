@@ -14,58 +14,41 @@ import {
     CircularProgress,
     ButtonGroup,
 } from '@material-ui/core';
-import { PeerClientContext } from 'contexts/PeerClientContext';
 import { Plus, Phone, Video, Chat, PhoneHangup } from 'mdi-material-ui';
-import { ConnectionInstance, PeerStatus } from 'types/peer';
+import { PeerStatus } from 'types/peer';
 import ReactPlayer from 'react-player';
 import StatusIndicator from 'atoms/StatusIndicator';
 import useStyles from './styles';
 import { MediaViewMode } from 'types/core';
+import { useChat } from 'contexts/ChatContext';
 
 const Home = () => {
     const classes = useStyles();
-
-    const peerClient = useContext(PeerClientContext);
-
-    const [currentConnection, setCurrentConnection] = React.useState<ConnectionInstance>(
-        null,
-    );
-
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [clientInitialized, setInitialized] = React.useState(false);
+    const {
+        authenticate,
+        isAuthenticated,
+        status,
+        connect,
+        connection,
+        messages,
+        sendMessage,
+        peer,
+        mediaStream,
+        peerMediaStream,
+    } = useChat();
 
     const [peerIdInput, setPeerIdInput] = React.useState('');
 
     const [mediaViewMode, setMediaViewMode] = React.useState<MediaViewMode>('Chat');
     const [messageInput, setMessageInput] = React.useState('');
-    const [messages, setMessages] = React.useState([]);
-
-    const [remoteMediaStream, setRemoteMediaStream] = React.useState<MediaStream>(null);
-    const [localMediaStream, setLocalMediaStream] = React.useState<MediaStream>(null);
-
-    const initializeClient = async () => {
-        setIsLoading(true);
-        await peerClient.init({
-            onNewConnection: setCurrentConnection,
-            onMessageReceived: setMessages as any,
-            onRemoteMediaReceived: setRemoteMediaStream,
-            onLocalMediaStreamStarted: setLocalMediaStream,
-        });
-        setInitialized(true);
-        setIsLoading(false);
-    };
 
     const startNewConnection = async () => {
-        const connection = await peerClient.createConnection(peerIdInput, setMessages);
-        setCurrentConnection(connection);
+        connect(peerIdInput);
         setPeerIdInput('');
     };
 
-    const sendMessage = async () => {
-        currentConnection.client.send(messageInput);
-        currentConnection.messages.push(messageInput);
-
-        setMessages([...currentConnection.messages]);
+    const send = async () => {
+        sendMessage(messageInput);
         setMessageInput('');
     };
 
@@ -88,11 +71,16 @@ const Home = () => {
             <div>
                 <StatusBar
                     status={
-                        clientInitialized ? 'online' : isLoading ? 'pending' : 'offline'
+                        // status === 'connected'
+                        //     ? 'online'
+                        //     : status === 'connecting'
+                        //     ? 'pending'
+                        //     : 'offline'
+                        isAuthenticated ? 'online' : 'offline'
                     }
                 />
                 <List style={{ color: 'white' }}>
-                    {clientInitialized && (
+                    {isAuthenticated && (
                         <>
                             <ListItem>
                                 <TextField
@@ -105,7 +93,7 @@ const Home = () => {
                                     variant={'outlined'}
                                     color={'primary'}
                                     placeholder={'Peer ID'}
-                                    disabled={!clientInitialized}
+                                    disabled={!isAuthenticated}
                                     fullWidth
                                 />
                                 <IconButton
@@ -121,7 +109,7 @@ const Home = () => {
                                     />
                                 </IconButton>
                             </ListItem>
-                            {peerClient.getConnections().map((connection) => (
+                            {/* {peerClient.getConnections().map((connection) => (
                                 <ListItem>
                                     <Typography>{connection.connectionId}</Typography>
                                     <IconButton
@@ -133,7 +121,7 @@ const Home = () => {
                                                 true,
                                             )
                                         }
-                                        disabled={Boolean(remoteMediaStream)}
+                                        disabled={Boolean(peerMediaStream)}
                                     >
                                         <Phone />
                                     </IconButton>
@@ -145,26 +133,33 @@ const Home = () => {
                                                 setLocalMediaStream,
                                             )
                                         }
-                                        disabled={Boolean(remoteMediaStream)}
+                                        disabled={Boolean(peerMediaStream)}
                                         className={
-                                            remoteMediaStream && classes.activeCall
+                                            peerMediaStream && classes.activeCall
                                         }
                                     >
                                         <Video />
                                     </IconButton>
                                 </ListItem>
-                            ))}
+                            ))} */}
                         </>
                     )}
                 </List>
             </div>
-            <DrawerVideoFeed />
+            {mediaStream !== null && (
+                <ReactPlayer
+                    width={'100%'}
+                    height={'30%'}
+                    style={{}}
+                    url={mediaStream}
+                />
+            )}
         </Drawer>
     );
 
     const MediaViewSelector = () => (
         <ButtonGroup disableElevation>
-            {clientInitialized && currentConnection && (
+            {isAuthenticated && connection && (
                 <>
                     <Button
                         onClick={() => setMediaViewMode('Chat')}
@@ -174,14 +169,14 @@ const Home = () => {
                     </Button>
                     <Button
                         onClick={() => setMediaViewMode('Video')}
-                        disabled={!remoteMediaStream}
+                        disabled={!peerMediaStream}
                         variant={mediaViewMode === 'Video' ? 'contained' : null}
                     >
                         <Video className={classes.mediaToggleIcons} />
                     </Button>
                     <Button
                         onClick={() => setMediaViewMode('Both')}
-                        disabled={!remoteMediaStream}
+                        disabled={!peerMediaStream}
                         variant={mediaViewMode === 'Both' ? 'contained' : null}
                     >
                         <Typography className={classes.bothButtonText}>Both</Typography>
@@ -191,15 +186,76 @@ const Home = () => {
         </ButtonGroup>
     );
 
-    const DrawerVideoFeed = () =>
-        localMediaStream !== null && (
-            <ReactPlayer
-                width={'100%'}
-                height={'30%'}
-                style={{}}
-                url={localMediaStream}
-            />
-        );
+    const MediaView = () => (
+        <main className={classes.mainContainer}>
+            {peerMediaStream === null ? (
+                <>
+                    <List className={classes.messagesListContainer}>
+                        {messages.map(({ content, author }, index) => (
+                            <ListItem key={index} style={{ color: 'white' }}>
+                                <Typography variant={'caption'}>{author}</Typography>
+                                <Typography>{content}</Typography>
+                            </ListItem>
+                        ))}
+                    </List>
+                    <Box padding={1} className={classes.messageBox}>
+                        <TextField
+                            id={'messageInput'}
+                            name={'messageInput'}
+                            value={messageInput}
+                            onChange={(event) => setMessageInput(event.target.value)}
+                            multiline
+                            rows={2}
+                            variant={'outlined'}
+                            color={'primary'}
+                            placeholder={'Type your words here...'}
+                            disabled={status !== 'connected'}
+                            fullWidth
+                        />
+                        <Button
+                            disabled={status !== 'connected' || messageInput.length <= 0}
+                            variant={'contained'}
+                            color={'primary'}
+                            onClick={send}
+                            style={{
+                                height: '75px',
+                                width: '75px',
+                                marginLeft: '0.5rem',
+                            }}
+                        >
+                            Send
+                        </Button>
+                    </Box>
+                </>
+            ) : (
+                <Box flex={1} height={'100%'}>
+                    <ReactPlayer
+                        width={'100%'}
+                        height={'85%'}
+                        controls
+                        url={peerMediaStream}
+                        playing={true}
+                    />
+                    <Box
+                        height={'15%'}
+                        display={'flex'}
+                        flexDirection={'column'}
+                        justifyContent={'center'}
+                        alignItems={'center'}
+                    >
+                        <IconButton
+                            onClick={() => {
+                                alert('Not implemented yet');
+                            }}
+                            style={{ backgroundColor: 'red' }}
+                        >
+                            <PhoneHangup className={classes.white} />
+                        </IconButton>
+                    </Box>
+                </Box>
+            )}
+        </main>
+    );
 
     return (
         <div className={classes.root}>
@@ -208,16 +264,16 @@ const Home = () => {
                 <Toolbar className={classes.toolbar}>
                     <MediaViewSelector />
                     <div>
-                        {clientInitialized ? (
-                            <Typography>ID: {peerClient.id}</Typography>
+                        {isAuthenticated ? (
+                            <Typography>ID: {peer.id}</Typography>
                         ) : (
                             <Button
                                 color={'primary'}
                                 variant={'contained'}
                                 style={{ color: 'white', width: '180px', height: '36px' }}
-                                onClick={initializeClient}
+                                onClick={authenticate}
                             >
-                                {isLoading ? (
+                                {status === 'connecting' ? (
                                     <CircularProgress color={'inherit'} size={'14px'} />
                                 ) : (
                                     'Continue as Guest'
@@ -230,7 +286,7 @@ const Home = () => {
             <div className={classes.content}>
                 <div className={classes.toolbarSpacer} />
                 <main className={classes.mainContainer}>
-                    {remoteMediaStream === null ? (
+                    {peerMediaStream === null ? (
                         <>
                             <List className={classes.messagesListContainer}>
                                 {messages.map((message, index) => (
@@ -255,13 +311,13 @@ const Home = () => {
                                     variant={'outlined'}
                                     color={'primary'}
                                     placeholder={'Type your words here...'}
-                                    disabled={!clientInitialized}
+                                    disabled={!isAuthenticated}
                                     fullWidth
                                     style={{ marginRight: '0.5rem' }}
                                 />
                                 <Button
                                     disabled={
-                                        !clientInitialized || messageInput.length <= 0
+                                        !isAuthenticated || messageInput.length <= 0
                                     }
                                     variant={'contained'}
                                     color={'primary'}
@@ -281,10 +337,10 @@ const Home = () => {
                                 width={'100%'}
                                 height={'85%'}
                                 controls
-                                url={remoteMediaStream}
+                                url={peerMediaStream}
                                 playing={true}
                             />
-                            <Box
+                            {/* <Box
                                 height={'15%'}
                                 display={'flex'}
                                 flexDirection={'column'}
@@ -301,7 +357,7 @@ const Home = () => {
                                 >
                                     <PhoneHangup className={classes.white} />
                                 </IconButton>
-                            </Box>
+                            </Box> */}
                         </Box>
                     )}
                 </main>

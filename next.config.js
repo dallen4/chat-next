@@ -11,8 +11,9 @@ module.exports = withSourceMaps({
             config.devtool = 'source-map';
         }
 
+        config.module.exprContextCritical = false;
+
         return config;
     },
-    target: 'serverless',
     env: {},
 });

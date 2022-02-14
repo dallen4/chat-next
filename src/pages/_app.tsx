@@ -1,55 +1,47 @@
 import React from 'react';
 import { CssBaseline, ThemeProvider } from '@material-ui/core';
-import App, { AppProps } from 'next/app';
-import Router from 'next/router';
+import { AppProps } from 'next/app';
+import { useRouter } from 'next/router';
 import { SnackbarProvider } from 'notistack';
 import { initGA, logPageView } from 'lib/google/analytics';
 import theme from 'theme';
 import { PeerClientProvider } from 'contexts/PeerClientContext';
 import PeerClient from 'lib/peer/client';
+import Head from 'next/head';
+import { ChatProvider } from 'contexts/ChatContext';
 
-export default class CustomApp extends App<any, any, { peerClient: PeerClient }> {
-    constructor(props: AppProps) {
-        super(props);
+function ChatApp({ Component, pageProps }: AppProps) {
+    const [peerClient, setPeerClient] = React.useState<PeerClient | null>(null);
 
-        const peerClient = new PeerClient();
+    const router = useRouter();
 
-        this.state = {
-            peerClient,
-        };
+    React.useEffect(() => {
+        initGA();
+        logPageView(window.location.pathname);
+        router.events.on('routeChangeComplete', logPageView);
+        setPeerClient(new PeerClient());
+    }, []);
 
-    }
-
-    componentDidMount() {
-        if (!window.GA_ANALYTICS && process.env.NODE_ENV === 'production') {
-            initGA();
-            window.GA_ANALYTICS = true;
-            logPageView(window.location.pathname);
-            Router.events.on('routeChangeComplete', logPageView);
-        }
-    }
-
-    initPeerClient = () => {
-        const peerClient = new PeerClient();
-        this.setState({ peerClient });
-        return peerClient;
-    };
-
-    render() {
-        const { Component, pageProps } = this.props;
-        const { peerClient } = this.state;
-
-        return (
-            <>
-                <ThemeProvider theme={theme}>
-                    <SnackbarProvider>
-                        <CssBaseline />
-                        <PeerClientProvider value={peerClient}>
-                        <Component {...pageProps} />
-                        </PeerClientProvider>
-                    </SnackbarProvider>
-                </ThemeProvider>
-            </>
-        );
-    }
+    return (
+        <>
+            <Head>
+                <meta
+                    name="viewport"
+                    content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
+                />
+            </Head>
+            <ThemeProvider theme={theme}>
+                <SnackbarProvider>
+                    <CssBaseline />
+                    <PeerClientProvider value={peerClient}>
+                        <ChatProvider>
+                            <Component {...pageProps} />
+                        </ChatProvider>
+                    </PeerClientProvider>
+                </SnackbarProvider>
+            </ThemeProvider>
+        </>
+    );
 }
+
+export default ChatApp;

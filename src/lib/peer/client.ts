@@ -19,7 +19,19 @@ export default class PeerClient {
         this.mediaStream = null;
     }
 
-    async init(handlers: PeerHanlders) {
+    async create(id: string) {
+        if (isClient) {
+            const { initPeer }: PeerUtils = require('.');
+
+            return new Promise<Peer>((resolve, reject) => {
+                const peer = initPeer(id);
+
+                resolve(peer);
+            });
+        }
+    }
+
+    async init(id: string, handlers: PeerHanlders) {
         if (isClient) {
             const { initPeer }: PeerUtils = require('.');
             const {
@@ -30,7 +42,7 @@ export default class PeerClient {
             } = handlers;
 
             return new Promise((resolve, reject) => {
-                this.peerClient = initPeer();
+                this.peerClient = initPeer(id);
 
                 this.peerClient.on('connection', (connection: Peer.DataConnection) => {
                     connection.on('open', () => {
@@ -145,7 +157,11 @@ export default class PeerClient {
         return this.pushMessage(peerId, message);
     };
 
-    requestMedia = (streamHandler: any, errorHandler: any, audioOnly = false) => {
+    requestMedia = (
+        streamHandler: (stream: MediaStream) => any,
+        errorHandler: (err: Error) => void,
+        audioOnly = false,
+    ) => {
         if (this.mediaStream) {
             streamHandler(this.mediaStream);
             return;
@@ -166,18 +182,7 @@ export default class PeerClient {
 
         if (audioOnly) constraintOptions.video = false;
 
-        if (
-            typeof navigator.mediaDevices === 'undefined' ||
-            typeof navigator.mediaDevices.getUserMedia === 'undefined'
-        ) {
-            navigator.getUserMedia =
-                navigator.getUserMedia ||
-                navigator.webkitGetUserMedia ||
-                navigator.mozGetUserMedia ||
-                navigator.msGetUserMedia;
-
-            navigator.getUserMedia(constraintOptions, streamHandler, errorHandler);
-        } else {
+        if (navigator.mediaDevices) {
             navigator.mediaDevices
                 .getUserMedia(constraintOptions)
                 .then(streamHandler)
@@ -185,7 +190,12 @@ export default class PeerClient {
         }
     };
 
-    callPeer(peerId: string, onRemoteMediaReceived: any, onLocalMediaStreamStarted: any, audioOnly = false) {
+    callPeer(
+        peerId: string,
+        onRemoteMediaReceived: (stream: MediaStream) => void,
+        onLocalMediaStreamStarted: (stream: MediaStream) => void,
+        audioOnly = false,
+    ) {
         this.requestMedia(
             (stream: MediaStream) => {
                 onLocalMediaStreamStarted(stream);
@@ -203,11 +213,11 @@ export default class PeerClient {
                 console.error(err);
                 alert('call failed');
             },
-            audioOnly
+            audioOnly,
         );
     }
 
-    endCall(peerId: string, onCallEnded?: any) {
+    endCall(peerId: string, onCallEnded?: () => void) {
         if (this.connections[peerId].call) this.connections[peerId].call.close();
 
         if (this.mediaStream) {
@@ -218,8 +228,7 @@ export default class PeerClient {
                 return true;
             });
 
-            if (stoppedTracks.length === tracks.length)
-                this.mediaStream = null;
+            if (stoppedTracks.length === tracks.length) this.mediaStream = null;
         }
 
         if (onCallEnded) onCallEnded();
