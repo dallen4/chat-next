@@ -1,11 +1,8 @@
-import { isClient } from 'config';
-import { getMediaStream } from 'lib/peer';
 import { generateUsername } from 'lib/util';
 import Peer from 'peerjs';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Message } from 'types/message';
 import { PeerUtils } from 'types/peer';
-import { PeerClientContext } from './PeerClientContext';
 
 export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 
@@ -14,6 +11,7 @@ export type ChatInfo = {
     status: ChatStatus;
     connection: Peer.DataConnection;
     messages: any[];
+    startCall: () => Promise<void>;
     mediaStream?: MediaStream;
     peerMediaStream?: MediaStream;
     call?: Peer.MediaConnection;
@@ -113,7 +111,7 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
 
     const authenticate = async () => {
         const { initPeer }: PeerUtils = require('../lib/peer');
-console.log('INITIALIZING PEER');
+
         const username = generateUsername();
         const newPeer = initPeer(username);
 
@@ -194,6 +192,7 @@ console.log('INITIALIZING PEER');
                 status,
                 connection,
                 messages,
+                startCall,
                 mediaStream,
                 peerMediaStream,
                 call,
