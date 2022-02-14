@@ -1,11 +1,16 @@
+import { isClient } from 'config';
+import { getMediaStream } from 'lib/peer';
 import { generateUsername } from 'lib/util';
 import Peer from 'peerjs';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { Message } from 'types/message';
+import { PeerUtils } from 'types/peer';
 import { PeerClientContext } from './PeerClientContext';
 
 export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 
 export type ChatInfo = {
+    peer: Peer;
     status: ChatStatus;
     connection: Peer.DataConnection;
     messages: any[];
@@ -13,6 +18,9 @@ export type ChatInfo = {
     peerMediaStream?: MediaStream;
     call?: Peer.MediaConnection;
     authenticate: () => Promise<void>;
+    isAuthenticated: boolean;
+    connect: (id: string) => Promise<void>;
+    sendMessage: (message: any) => Promise<void>;
 };
 
 export const ChatContext = createContext<ChatInfo>(null);
@@ -20,55 +28,70 @@ export const ChatContext = createContext<ChatInfo>(null);
 export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
-    const client = useContext(PeerClientContext);
-    const [peer, setPeer] = useState<Peer>(null);
+    const peerRef = useRef<Peer>();
     const [username, setUsername] = useState<string>(null);
     const [connection, setConnection] = useState<Peer.DataConnection>();
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
     const [peerMediaStream, setPeerMediaStream] = useState<MediaStream>(null);
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [call, setCall] = useState<Peer.MediaConnection>(null);
 
-    const onData = (data: any) => {
+    const isAuthenticated = !!username;
+
+    const onData = (data: Message) => {
         setMessages((messages) => [...messages, data]);
     };
 
     const onCall = async (call: Peer.MediaConnection) => {
         if (window.confirm(`${call.peer} is calling, would you like to answer?`)) {
-            client.requestMedia(
-                (stream: MediaStream) => {
-                    call.answer(stream);
-                    call.on('stream', setPeerMediaStream);
-                    call.on('close', () => alert(`Call with ${call.peer} ended`));
-                    setCall(call);
-                    setMediaStream(stream);
-                },
-                (err: any) => {
-                    console.error(err);
-                    alert('Error occurred');
-                    call.close();
-                },
-            );
+            try {
+                const stream = await getLocalStream();
+
+                call.answer(stream);
+                call.on('stream', setPeerMediaStream);
+                call.on('close', () => alert(`Call with ${call.peer} ended`));
+
+                setCall(call);
+                setMediaStream(stream);
+            } catch (err) {
+                console.error(err);
+                alert('Error occurred');
+                call.close();
+            }
         }
     };
 
-    const onConnection = (newConnection: Peer.DataConnection) => {
+    function onConnection(newConnection: Peer.DataConnection) {
         newConnection.on('open', () => {
-            connection.send(`${peer.id} has joined the chat`);
+            newConnection.send({
+                type: 'system',
+                author: 'Bot',
+                content: `${peerRef.current.id} has joined the chat`,
+            });
+            setStatus('connected');
             setConnection(newConnection);
         });
 
         newConnection.on('data', (data) => {
             setMessages((prevMessages) => [...prevMessages, data]);
         });
+
+        newConnection.on('error', (err) => {
+            console.error(err);
+        });
+
+        newConnection.on('close', () => {
+            setConnection(null);
+            setStatus('disconnected');
+        });
     }
 
     useEffect(() => {
         return () => {
-            if (peer) {
-                peer.off('connection', setConnection);
-                peer.off('call', onCall);
+            if (peerRef.current) {
+                peerRef.current.off('connection', setConnection);
+                peerRef.current.off('call', onCall);
 
                 if (connection) {
                     connection.off('data', onData);
@@ -81,28 +104,93 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
                     setPeerMediaStream(null);
                 }
 
-                peer.disconnect();
-                peer.destroy();
-                setPeer(null);
+                peerRef.current.disconnect();
+                peerRef.current.destroy();
+                peerRef.current = null;
             }
         };
     }, []);
 
     const authenticate = async () => {
+        const { initPeer }: PeerUtils = require('../lib/peer');
+console.log('INITIALIZING PEER');
         const username = generateUsername();
-        const newPeer = await client.create(username);
+        const newPeer = initPeer(username);
 
         newPeer.on('connection', onConnection);
 
         newPeer.on('call', onCall);
 
-        setPeer(newPeer);
-        setUsername(username);
+        newPeer.on('error', (error) => {
+            console.error(error);
+            alert('Error occurred');
+        });
+
+        newPeer.on('disconnected', () => {
+            newPeer.reconnect();
+        });
+
+        newPeer.on('open', (id: string) => {
+            peerRef.current = newPeer;
+            setUsername(id);
+        });
+    };
+
+    const connect = async (id: string) => {
+        setStatus('connecting');
+
+        const newConnection = peerRef.current.connect(id, {
+            metadata: {
+                username,
+            },
+        });
+
+        onConnection(newConnection);
+    };
+
+    const sendMessage = async (content: string) => {
+        if (connection) {
+            const message: Message = {
+                type: 'user',
+                author: username,
+                content,
+            };
+
+            connection.send(message);
+
+            setMessages((prevMessages) => [...prevMessages, message]);
+        }
+    };
+
+    const getLocalStream = async () => {
+        let stream = mediaStream;
+
+        if (!stream) {
+            const { getMediaStream }: PeerUtils = require('../lib/peer');
+            stream = await getMediaStream();
+        }
+
+        return stream;
+    };
+
+    const startCall = async () => {
+        if (connection) {
+            const stream = await getLocalStream();
+
+            const call = peerRef.current.call(connection.peer, mediaStream);
+            call.on('stream', setPeerMediaStream);
+            call.on('close', () => alert(`Call with ${call.peer} ended`));
+
+            setMediaStream(stream);
+            setCall(call);
+        }
     };
 
     return (
         <ChatContext.Provider
             value={{
+                peer: peerRef.current,
+                isAuthenticated,
                 status,
                 connection,
                 messages,
@@ -110,6 +198,8 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
                 peerMediaStream,
                 call,
                 authenticate,
+                connect,
+                sendMessage,
             }}
         >
             {children}
@@ -118,6 +208,5 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
 };
 
 export type ChatProps = {
-    connectionId: string;
     children: React.ReactNode;
 };
