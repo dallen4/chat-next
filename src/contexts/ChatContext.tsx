@@ -1,10 +1,11 @@
 import { useNotification } from 'hooks/use-notification';
+import { PeerErrorType, PeerErrorTypes } from 'lib/constants';
 import { getUserMeta, setUserMeta } from 'lib/store';
 import { generateUsername } from 'lib/util';
 import Peer from 'peerjs';
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Message } from 'types/message';
-import { PeerUtils } from 'types/peer';
+import { PeerStatus, PeerUtils } from 'types/peer';
 
 export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 
@@ -30,7 +31,7 @@ export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider: React.FC = ({ children }) => {
     const peerRef = useRef<Peer>();
-    const [username, setUsername] = useState<string>(null);
+    const [peerStatus, setPeerStatus] = useState<PeerStatus>('offline');
     const [connection, setConnection] = useState<Peer.DataConnection>();
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
@@ -38,6 +39,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [call, setCall] = useState<Peer.MediaConnection>(null);
     const [connections, setConnections] = useState<Peer.DataConnection[]>([]);
+    const [currentConnectionId, setCurrentConnectionId] = useState<string>(null);
 
     const { pushErrorMessage } = useNotification();
 
@@ -95,7 +97,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     useEffect(() => {
         return () => {
             if (peerRef.current) {
-                peerRef.current.off('connection', setConnection);
+                peerRef.current.off('connection', onConnection);
                 peerRef.current.off('call', onCall);
 
                 if (connections.length) {
@@ -122,9 +124,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     const authenticate = async () => {
         const { initPeer }: PeerUtils = require('../lib/peer');
 
-        let username = await getUserMeta();
-
-        if (!username) username = generateUsername();
+        const username = generateUsername();
 
         const newPeer = initPeer(username);
 
@@ -134,7 +134,7 @@ export const ChatProvider: React.FC = ({ children }) => {
 
         newPeer.on('error', (error) => {
             console.error(error);
-            alert('Error occurred');
+            handlePeerError(error);
         });
 
         newPeer.on('disconnected', () => {
@@ -143,17 +143,17 @@ export const ChatProvider: React.FC = ({ children }) => {
 
         newPeer.on('open', (id: string) => {
             peerRef.current = newPeer;
-            setUsername(id);
+            setPeerStatus('online');
             setUserMeta(id);
         });
     };
 
     const hydrateConnections = () => {
-        const connectionList = Object.entries<[Peer.DataConnection]>(
-            peerRef.current.connections,
-        )
-            .filter(([, [connection]]) => connection.type === 'data')
-            .map(([, [connection]]) => connection);
+        const connectionList = peerRef.current
+            ? Object.entries<[Peer.DataConnection]>(peerRef.current.connections)
+                  .filter(([, [connection]]) => connection.type === 'data')
+                  .map(([, [connection]]) => connection)
+            : [];
 
         setConnections(connectionList);
     };
@@ -163,7 +163,7 @@ export const ChatProvider: React.FC = ({ children }) => {
 
         const newConnection = peerRef.current.connect(id, {
             metadata: {
-                username,
+                startTime: Date.now(),
             },
         });
 
@@ -175,7 +175,7 @@ export const ChatProvider: React.FC = ({ children }) => {
             const message: Message = {
                 timestamp: Date.now(),
                 type: 'user',
-                author: username,
+                author: peerRef.current.id,
                 content,
             };
 
@@ -207,6 +207,23 @@ export const ChatProvider: React.FC = ({ children }) => {
             setMediaStream(stream);
             setCall(call);
         }
+    };
+
+    const handlePeerError = <T extends { type: PeerErrorType }>(err: T) => {
+        let message = 'Error occurred, connections may be unstable';
+        let retryAction: () => void;
+
+        switch (err.type) {
+            case PeerErrorTypes.BrowserIncompatible:
+                message = 'Your browser does not support WebRTC';
+                break;
+            case PeerErrorTypes.Disconnected:
+                message = 'You have disconnnected from the network';
+                retryAction = peerRef.current && peerRef.current.reconnect;
+                break;
+        }
+
+        pushErrorMessage(message, retryAction);
     };
 
     return (
