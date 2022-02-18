@@ -36,7 +36,7 @@ export function useNotification() {
         enqueueSnackbar(message, {
             key,
             variant: 'error',
-            action: (
+            action: retryAction && (
                 <Button
                     style={{ color: theme.palette.secondary.main }}
                     onClick={retryAction}
