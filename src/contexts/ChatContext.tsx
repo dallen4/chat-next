@@ -1,16 +1,20 @@
+import { useNotification } from 'hooks/use-notification';
+import { PeerErrorType, PeerErrorTypes } from 'lib/constants';
+import { getUserMeta, setUserMeta } from 'lib/store';
 import { generateUsername } from 'lib/util';
 import Peer from 'peerjs';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Message } from 'types/message';
-import { PeerUtils } from 'types/peer';
+import { PeerStatus, PeerUtils } from 'types/peer';
 
 export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 
 export type ChatInfo = {
     peer: Peer;
     status: ChatStatus;
+    connections: Peer.DataConnection[];
     connection: Peer.DataConnection;
-    messages: any[];
+    messages: Message[];
     startCall: () => Promise<void>;
     mediaStream?: MediaStream;
     peerMediaStream?: MediaStream;
@@ -18,26 +22,30 @@ export type ChatInfo = {
     authenticate: () => Promise<void>;
     isAuthenticated: boolean;
     connect: (id: string) => Promise<void>;
-    sendMessage: (message: any) => Promise<void>;
+    sendMessage: (message: string) => Promise<void>;
 };
 
 export const ChatContext = createContext<ChatInfo>(null);
 
 export const useChat = () => useContext(ChatContext);
 
-export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
+export const ChatProvider: React.FC = ({ children }) => {
     const peerRef = useRef<Peer>();
-    const [username, setUsername] = useState<string>(null);
+    const [peerStatus, setPeerStatus] = useState<PeerStatus>('offline');
     const [connection, setConnection] = useState<Peer.DataConnection>();
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
     const [peerMediaStream, setPeerMediaStream] = useState<MediaStream>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [call, setCall] = useState<Peer.MediaConnection>(null);
+    const [connections, setConnections] = useState<Peer.DataConnection[]>([]);
+    const [currentConnectionId, setCurrentConnectionId] = useState<string>(null);
 
-    const isAuthenticated = !!username;
+    const { pushErrorMessage } = useNotification();
 
-    const onData = (data: Message) => {
+    const isAuthenticated = peerStatus === 'online';
+
+    const onMessage = (data: Message) => {
         setMessages((messages) => [...messages, data]);
     };
 
@@ -63,17 +71,17 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
     function onConnection(newConnection: Peer.DataConnection) {
         newConnection.on('open', () => {
             newConnection.send({
+                timestamp: Date.now(),
                 type: 'system',
                 author: 'Bot',
                 content: `${peerRef.current.id} has joined the chat`,
             });
             setStatus('connected');
             setConnection(newConnection);
+            hydrateConnections();
         });
 
-        newConnection.on('data', (data) => {
-            setMessages((prevMessages) => [...prevMessages, data]);
-        });
+        newConnection.on('data', onMessage);
 
         newConnection.on('error', (err) => {
             console.error(err);
@@ -82,17 +90,21 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
         newConnection.on('close', () => {
             setConnection(null);
             setStatus('disconnected');
+            hydrateConnections();
         });
     }
 
     useEffect(() => {
         return () => {
             if (peerRef.current) {
-                peerRef.current.off('connection', setConnection);
+                peerRef.current.off('connection', onConnection);
                 peerRef.current.off('call', onCall);
 
-                if (connection) {
-                    connection.off('data', onData);
+                if (connections.length) {
+                    connections.forEach((connection) => {
+                        connection.close();
+                        connection.off('data', onMessage);
+                    });
                 }
 
                 if (call) {
@@ -113,6 +125,7 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
         const { initPeer }: PeerUtils = require('../lib/peer');
 
         const username = generateUsername();
+
         const newPeer = initPeer(username);
 
         newPeer.on('connection', onConnection);
@@ -121,7 +134,7 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
 
         newPeer.on('error', (error) => {
             console.error(error);
-            alert('Error occurred');
+            handlePeerError(error);
         });
 
         newPeer.on('disconnected', () => {
@@ -130,8 +143,19 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
 
         newPeer.on('open', (id: string) => {
             peerRef.current = newPeer;
-            setUsername(id);
+            setPeerStatus('online');
+            setUserMeta(id);
         });
+    };
+
+    const hydrateConnections = () => {
+        const connectionList = peerRef.current
+            ? Object.entries<[Peer.DataConnection]>(peerRef.current.connections)
+                  .filter(([, [connection]]) => connection.type === 'data')
+                  .map(([, [connection]]) => connection)
+            : [];
+
+        setConnections(connectionList);
     };
 
     const connect = async (id: string) => {
@@ -139,7 +163,7 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
 
         const newConnection = peerRef.current.connect(id, {
             metadata: {
-                username,
+                startTime: Date.now(),
             },
         });
 
@@ -149,14 +173,15 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
     const sendMessage = async (content: string) => {
         if (connection) {
             const message: Message = {
+                timestamp: Date.now(),
                 type: 'user',
-                author: username,
+                author: peerRef.current.id,
                 content,
             };
 
             connection.send(message);
 
-            setMessages((prevMessages) => [...prevMessages, message]);
+            onMessage(message);
         }
     };
 
@@ -184,12 +209,30 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
         }
     };
 
+    const handlePeerError = <T extends { type: PeerErrorType }>(err: T) => {
+        let message = 'Error occurred, connections may be unstable';
+        let retryAction: () => void;
+
+        switch (err.type) {
+            case PeerErrorTypes.BrowserIncompatible:
+                message = 'Your browser does not support WebRTC';
+                break;
+            case PeerErrorTypes.Disconnected:
+                message = 'You have disconnnected from the network';
+                retryAction = peerRef.current && peerRef.current.reconnect;
+                break;
+        }
+
+        pushErrorMessage(message, retryAction);
+    };
+
     return (
         <ChatContext.Provider
             value={{
                 peer: peerRef.current,
                 isAuthenticated,
                 status,
+                connections,
                 connection,
                 messages,
                 startCall,
@@ -204,8 +247,4 @@ export const ChatProvider: React.FC<ChatProps> = ({ children }) => {
             {children}
         </ChatContext.Provider>
     );
-};
-
-export type ChatProps = {
-    children: React.ReactNode;
 };

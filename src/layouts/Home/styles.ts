@@ -54,12 +54,6 @@ const styles: any = (theme: Theme) =>
             justifyContent: 'flex-start',
             alignItems: 'center',
         },
-        messageBox: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: theme.palette.primary.light,
-        },
         drawerToolbarContent: {
             display: 'flex',
             flexDirection: 'column',

@@ -21,6 +21,8 @@ import StatusIndicator from 'atoms/StatusIndicator';
 import useStyles from './styles';
 import { MediaViewMode } from 'types/core';
 import { useChat } from 'contexts/ChatContext';
+import MessageBox from 'molecules/MessageBox';
+import MessageItem from 'atoms/MessageItem';
 
 const Home = () => {
     const classes = useStyles();
@@ -28,28 +30,21 @@ const Home = () => {
         authenticate,
         isAuthenticated,
         status,
+        connections,
         connect,
         connection,
         messages,
-        sendMessage,
         peer,
         mediaStream,
         peerMediaStream,
     } = useChat();
 
     const [peerIdInput, setPeerIdInput] = React.useState('');
-
     const [mediaViewMode, setMediaViewMode] = React.useState<MediaViewMode>('Chat');
-    const [messageInput, setMessageInput] = React.useState('');
 
     const startNewConnection = async () => {
         connect(peerIdInput);
         setPeerIdInput('');
-    };
-
-    const send = async () => {
-        sendMessage(messageInput);
-        setMessageInput('');
     };
 
     const StatusBar = ({ status }: { status: PeerStatus }) => (
@@ -97,42 +92,42 @@ const Home = () => {
                                     fullWidth
                                 />
                                 <IconButton
-                                    disabled={peerIdInput.length < 10}
+                                    disabled={peerIdInput.length < 5}
                                     onClick={startNewConnection}
                                 >
                                     <Plus
                                         className={
-                                            peerIdInput.length < 10
+                                            peerIdInput.length < 5
                                                 ? classes.white
                                                 : classes.activeAddPeer
                                         }
                                     />
                                 </IconButton>
                             </ListItem>
-                            {/* {peerClient.getConnections().map((connection) => (
+                            {connections.map((connection) => (
                                 <ListItem>
-                                    <Typography>{connection.connectionId}</Typography>
+                                    <Typography>{connection.peer}</Typography>
                                     <IconButton
-                                        onClick={() =>
-                                            peerClient.callPeer(
-                                                connection.connectionId,
-                                                setRemoteMediaStream,
-                                                setLocalMediaStream,
-                                                true,
-                                            )
-                                        }
+                                        // onClick={() =>
+                                        //     peerClient.callPeer(
+                                        //         connection.connectionId,
+                                        //         setRemoteMediaStream,
+                                        //         setLocalMediaStream,
+                                        //         true,
+                                        //     )
+                                        // }
                                         disabled={Boolean(peerMediaStream)}
                                     >
                                         <Phone />
                                     </IconButton>
                                     <IconButton
-                                        onClick={() =>
-                                            peerClient.callPeer(
-                                                connection.connectionId,
-                                                setRemoteMediaStream,
-                                                setLocalMediaStream,
-                                            )
-                                        }
+                                        // onClick={() =>
+                                        //     peerClient.callPeer(
+                                        //         connection.connectionId,
+                                        //         setRemoteMediaStream,
+                                        //         setLocalMediaStream,
+                                        //     )
+                                        // }
                                         disabled={Boolean(peerMediaStream)}
                                         className={
                                             peerMediaStream && classes.activeCall
@@ -141,18 +136,13 @@ const Home = () => {
                                         <Video />
                                     </IconButton>
                                 </ListItem>
-                            ))} */}
+                            ))}
                         </>
                     )}
                 </List>
             </div>
             {mediaStream !== null && (
-                <ReactPlayer
-                    width={'100%'}
-                    height={'30%'}
-                    style={{}}
-                    url={mediaStream}
-                />
+                <ReactPlayer width={'100%'} height={'30%'} style={{}} url={mediaStream} />
             )}
         </Drawer>
     );
@@ -191,41 +181,11 @@ const Home = () => {
             {peerMediaStream === null ? (
                 <>
                     <List className={classes.messagesListContainer}>
-                        {messages.map(({ content, author }, index) => (
-                            <ListItem key={index} style={{ color: 'white' }}>
-                                <Typography variant={'caption'}>{author}</Typography>
-                                <Typography>{content}</Typography>
-                            </ListItem>
+                        {messages.map((message) => (
+                            <MessageItem message={message} />
                         ))}
                     </List>
-                    <Box padding={1} className={classes.messageBox}>
-                        <TextField
-                            id={'messageInput'}
-                            name={'messageInput'}
-                            value={messageInput}
-                            onChange={(event) => setMessageInput(event.target.value)}
-                            multiline
-                            rows={2}
-                            variant={'outlined'}
-                            color={'primary'}
-                            placeholder={'Type your words here...'}
-                            disabled={status !== 'connected'}
-                            fullWidth
-                        />
-                        <Button
-                            disabled={status !== 'connected' || messageInput.length <= 0}
-                            variant={'contained'}
-                            color={'primary'}
-                            onClick={send}
-                            style={{
-                                height: '75px',
-                                width: '75px',
-                                marginLeft: '0.5rem',
-                            }}
-                        >
-                            Send
-                        </Button>
-                    </Box>
+                    <MessageBox disabled={status !== 'connected'} />
                 </>
             ) : (
                 <Box flex={1} height={'100%'}>
@@ -285,82 +245,7 @@ const Home = () => {
             </AppBar>
             <div className={classes.content}>
                 <div className={classes.toolbarSpacer} />
-                <main className={classes.mainContainer}>
-                    {peerMediaStream === null ? (
-                        <>
-                            <List className={classes.messagesListContainer}>
-                                {messages.map((message, index) => (
-                                    <ListItem key={index} style={{ color: 'white' }}>
-                                        <Typography variant={'caption'}>
-                                            username
-                                        </Typography>
-                                        <Typography>{message}</Typography>
-                                    </ListItem>
-                                ))}
-                            </List>
-                            <Box padding={1} className={classes.messageBox}>
-                                <TextField
-                                    id={'messageInput'}
-                                    name={'messageInput'}
-                                    value={messageInput}
-                                    onChange={(event) =>
-                                        setMessageInput(event.target.value)
-                                    }
-                                    multiline
-                                    rows={2}
-                                    variant={'outlined'}
-                                    color={'primary'}
-                                    placeholder={'Type your words here...'}
-                                    disabled={!isAuthenticated}
-                                    fullWidth
-                                    style={{ marginRight: '0.5rem' }}
-                                />
-                                <Button
-                                    disabled={
-                                        !isAuthenticated || messageInput.length <= 0
-                                    }
-                                    variant={'contained'}
-                                    color={'primary'}
-                                    onClick={sendMessage}
-                                    style={{
-                                        height: '75px',
-                                        width: '75px',
-                                    }}
-                                >
-                                    Send
-                                </Button>
-                            </Box>
-                        </>
-                    ) : (
-                        <Box flex={1} height={'100%'}>
-                            <ReactPlayer
-                                width={'100%'}
-                                height={'85%'}
-                                controls
-                                url={peerMediaStream}
-                                playing={true}
-                            />
-                            {/* <Box
-                                height={'15%'}
-                                display={'flex'}
-                                flexDirection={'column'}
-                                justifyContent={'center'}
-                                alignItems={'center'}
-                            >
-                                <IconButton
-                                    onClick={() =>
-                                        peerClient.endCall(currentConnection.peerId, () =>
-                                            setRemoteMediaStream(null),
-                                        )
-                                    }
-                                    style={{ backgroundColor: 'red' }}
-                                >
-                                    <PhoneHangup className={classes.white} />
-                                </IconButton>
-                            </Box> */}
-                        </Box>
-                    )}
-                </main>
+                <MediaView />
             </div>
         </div>
     );
