@@ -43,7 +43,7 @@ export const ChatProvider: React.FC = ({ children }) => {
 
     const { pushErrorMessage } = useNotification();
 
-    const isAuthenticated = !!peerRef.current;
+    const isAuthenticated = peerStatus === 'online';
 
     const onMessage = (data: Message) => {
         setMessages((messages) => [...messages, data]);
