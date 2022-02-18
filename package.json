@@ -1,6 +1,6 @@
 {
   "name": "chat-next",
-  "version": "0.50.0",
+  "version": "0.0.1",
   "description": "p2p chat application",
   "main": "index.js",
   "author": "Nieky",
@@ -8,7 +8,8 @@
   "private": true,
   "scripts": {
     "start": "next dev",
-    "build": "next build"
+    "build": "next build",
+    "version-bump": "bump --commit --tag --push"
   },
   "dependencies": {
     "@faker-js/faker": "^6.0.0-alpha.5",
