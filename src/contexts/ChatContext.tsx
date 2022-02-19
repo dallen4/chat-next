@@ -1,7 +1,8 @@
 import { useNotification } from 'hooks/use-notification';
 import { PeerErrorType, PeerErrorTypes } from 'lib/constants';
+import { exampleMessages } from 'lib/examples';
 import { getUserMeta, setUserMeta } from 'lib/store';
-import { generateUsername } from 'lib/util';
+import { generateColorSet, generateUsername } from 'lib/util';
 import Peer from 'peerjs';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Message } from 'types/message';
@@ -151,7 +152,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     const hydrateConnections = () => {
         const connectionList = peerRef.current
             ? Object.entries<[Peer.DataConnection]>(peerRef.current.connections)
-                  .filter(([, [connection]]) => connection.type === 'data')
+                  .filter(([, [connection]]) => connection && connection.type === 'data')
                   .map(([, [connection]]) => connection)
             : [];
 
@@ -161,9 +162,13 @@ export const ChatProvider: React.FC = ({ children }) => {
     const connect = async (id: string) => {
         setStatus('connecting');
 
+        const [color1, color2] = generateColorSet();
+
         const newConnection = peerRef.current.connect(id, {
             metadata: {
                 startTime: Date.now(),
+                [peerRef.current.id]: color1,
+                [id]: color2,
             },
         });
 

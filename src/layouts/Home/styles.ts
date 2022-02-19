@@ -1,6 +1,5 @@
 import { Theme, makeStyles, createStyles } from '@material-ui/core';
-
-const drawerWidth = 280;
+import { drawerWidth } from 'lib/constants';
 
 const styles: any = (theme: Theme) =>
     createStyles({
@@ -17,17 +16,6 @@ const styles: any = (theme: Theme) =>
             justifyContent: 'space-between',
             alignItems: 'center',
         },
-        drawer: {
-            width: drawerWidth,
-            flexShrink: 0,
-        },
-        drawerPaper: {
-            width: drawerWidth,
-            backgroundColor: theme.palette.secondary.main,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-        },
         // necessary for content to be below app bar
         toolbarSpacer: theme.mixins.toolbar,
         content: {
@@ -40,40 +28,9 @@ const styles: any = (theme: Theme) =>
             flexDirection: 'column',
             justifyContent: 'flex-start',
         },
-        mainContainer: {
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: theme.palette.secondary.main,
-        },
-        messagesListContainer: {
-            overflow: 'scroll',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-        },
-        drawerToolbarContent: {
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            color: 'white',
-        },
-        white: {
-            color: 'white',
-        },
-        activeAddPeer: {
-            color: theme.palette.secondary.light,
-        },
         bothButtonText: {
             color: theme.palette.primary.main,
             fontSize: '0.9rem',
-        },
-        activeCall: {
-            backgroundColor: theme.palette.system.success,
-            color: theme.palette.common.white,
         },
         mediaToggleIcons: {
             fontSize: '1.1rem',

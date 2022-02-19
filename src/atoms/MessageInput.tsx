@@ -1,23 +1,18 @@
-import React, { forwardRef, Ref, useImperativeHandle, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import TextField from '@material-ui/core/TextField';
 
-const MessageInput = (
-    { disabled, onSubmit }: MessageInputProps,
-    ref: Ref<MessageInputRef>,
-) => {
-    const [messageInput, setMessageInput] = useState('');
+const MessageInput = ({
+    disabled,
+    onSubmit,
+    messageInput,
+    setMessageInput,
+}: MessageInputProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
-
-    useImperativeHandle(ref, () => ({
-        getInputValue: () => messageInput,
-    }));
 
     const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
             event.preventDefault();
-            onSubmit(messageInput);
-            setMessageInput('');
-            inputRef.current.focus();
+            onSubmit();
         }
     };
 
@@ -41,12 +36,10 @@ const MessageInput = (
 };
 
 type MessageInputProps = {
-    onSubmit: (message: string) => void;
+    messageInput: string;
+    setMessageInput: (messageInput: string) => void;
+    onSubmit: () => void;
     disabled?: boolean;
 };
 
-export type MessageInputRef = {
-    getInputValue: () => string;
-};
-
-export default forwardRef<MessageInputRef, MessageInputProps>(MessageInput);
+export default MessageInput;

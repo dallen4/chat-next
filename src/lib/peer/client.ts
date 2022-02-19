@@ -4,7 +4,6 @@ import {
     ConnectionMap,
     ConnectionInstance,
     PeerHanlders,
-    Message,
 } from 'types/peer';
 import Peer from 'peerjs';
 
@@ -147,12 +146,12 @@ export default class PeerClient {
         });
     }
 
-    pushMessage = (peerId: string, message: Message) => {
+    pushMessage = (peerId: string, message: string) => {
         this.connections[peerId].messages.push(message);
         return [...this.connections[peerId].messages];
     };
 
-    sendMessage = (peerId: string, message: Message) => {
+    sendMessage = (peerId: string, message: string) => {
         this.connections[peerId].client.send(message);
         return this.pushMessage(peerId, message);
     };
