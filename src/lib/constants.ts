@@ -1,3 +1,6 @@
+
+export const drawerWidth = 280;
+
 /**
  * ref: https://peerjs.com/docs.html#peeron-error
  */
