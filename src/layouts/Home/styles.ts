@@ -28,23 +28,6 @@ const styles: any = (theme: Theme) =>
             flexDirection: 'column',
             justifyContent: 'flex-start',
         },
-        mainContainer: {
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: theme.palette.secondary.main,
-        },
-        messagesListContainer: {
-            overflow: 'scroll',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-        },
-        white: {
-            color: 'white',
-        },
         bothButtonText: {
             color: theme.palette.primary.main,
             fontSize: '0.9rem',

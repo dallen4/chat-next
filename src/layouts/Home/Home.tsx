@@ -1,23 +1,18 @@
 import React from 'react';
 import {
     AppBar,
-    List,
     Toolbar,
-    Box,
     Button,
     Typography,
-    IconButton,
     CircularProgress,
     ButtonGroup,
 } from '@material-ui/core';
-import { Video, Chat, PhoneHangup } from 'mdi-material-ui';
-import ReactPlayer from 'react-player';
+import { Video, Chat } from 'mdi-material-ui';
 import useStyles from './styles';
 import { MediaViewMode } from 'types/core';
 import { useChat } from 'contexts/ChatContext';
-import MessageBox from 'molecules/MessageBox';
-import MessageItem from 'atoms/MessageItem';
 import Sidebar from 'molecules/Sidebar';
+import MediaView from 'organisms/MediaView';
 
 const Home = () => {
     const classes = useStyles();
@@ -26,7 +21,6 @@ const Home = () => {
         isAuthenticated,
         status,
         connection,
-        messages,
         peer,
         peerMediaStream,
     } = useChat();
@@ -35,7 +29,7 @@ const Home = () => {
 
     const MediaViewSelector = () => (
         <ButtonGroup disableElevation>
-            {isAuthenticated && connection && (
+            {connection && (
                 <>
                     <Button
                         onClick={() => setMediaViewMode('Chat')}
@@ -60,47 +54,6 @@ const Home = () => {
                 </>
             )}
         </ButtonGroup>
-    );
-
-    const MediaView = () => (
-        <main className={classes.mainContainer}>
-            {peerMediaStream === null ? (
-                <>
-                    <List className={classes.messagesListContainer}>
-                        {messages.map((message) => (
-                            <MessageItem message={message} />
-                        ))}
-                    </List>
-                    <MessageBox disabled={status !== 'connected'} />
-                </>
-            ) : (
-                <Box flex={1} height={'100%'}>
-                    <ReactPlayer
-                        width={'100%'}
-                        height={'85%'}
-                        controls
-                        url={peerMediaStream}
-                        playing={true}
-                    />
-                    <Box
-                        height={'15%'}
-                        display={'flex'}
-                        flexDirection={'column'}
-                        justifyContent={'center'}
-                        alignItems={'center'}
-                    >
-                        <IconButton
-                            onClick={() => {
-                                alert('Not implemented yet');
-                            }}
-                            style={{ backgroundColor: 'red' }}
-                        >
-                            <PhoneHangup className={classes.white} />
-                        </IconButton>
-                    </Box>
-                </Box>
-            )}
-        </main>
     );
 
     return (
