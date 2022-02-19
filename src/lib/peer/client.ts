@@ -4,7 +4,6 @@ import {
     ConnectionMap,
     ConnectionInstance,
     PeerHanlders,
-    Message,
 } from 'types/peer';
 import Peer from 'peerjs';
 
