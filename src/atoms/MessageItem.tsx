@@ -42,7 +42,7 @@ const MessageItem = (props: MessageItemProps) => {
     const { message } = props;
     const { timestamp, type, author, content } = message;
 
-    const avatarColor = connection ? connection.metadata[author] : generateAvatarColor();;
+    const avatarColor = connection ? connection.metadata[author] : generateAvatarColor();
 
     return (
         <ListItem key={timestamp} className={clsx(classes.item, classes.white)}>
@@ -55,7 +55,7 @@ const MessageItem = (props: MessageItemProps) => {
                     display={'flex'}
                     flexDirection={'row'}
                     justifyContent={'flex-start'}
-                    alignItems={'center'}
+                    alignItems={'flex-start'}
                 >
                     <Avatar
                         className={classes.avatar}
@@ -64,9 +64,18 @@ const MessageItem = (props: MessageItemProps) => {
                         <Typography>{author.slice(0, 1).toUpperCase()}</Typography>
                     </Avatar>
                     <Box>
-                        <Typography variant={'body2'} className={classes.author}>
-                            {author}
-                        </Typography>
+                        <Box
+                            display={'flex'}
+                            flexDirection={'row'}
+                            justifyContent={'flex-start'}
+                        >
+                            <Typography variant={'body2'} className={classes.author}>
+                                {author}
+                            </Typography>
+                            <Typography variant={'caption'}>
+                                {new Date(timestamp).toDateString()}
+                            </Typography>
+                        </Box>
                         <Typography>{content}</Typography>
                     </Box>
                 </Box>
