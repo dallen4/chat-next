@@ -16,6 +16,7 @@ const useStyles = makeStyles((theme) =>
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: theme.palette.secondary.main,
+            height: `calc(100vh - 64px - 95px)`,
         },
         messagesListContainer: {
             overflow: 'scroll',
