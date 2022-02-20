@@ -30,7 +30,8 @@ const useStyles = makeStyles((theme) =>
         },
         author: {
             fontWeight: 'bold',
-            paddingBottom: theme.spacing(0.5),
+            lineHeight: '14px',
+            marginRight: theme.spacing(0.75),
         },
     }),
 );
@@ -68,11 +69,13 @@ const MessageItem = (props: MessageItemProps) => {
                             display={'flex'}
                             flexDirection={'row'}
                             justifyContent={'flex-start'}
+                            alignItems={'flex-end'}
+                            paddingBottom={1.25}
                         >
                             <Typography variant={'body2'} className={classes.author}>
                                 {author}
                             </Typography>
-                            <Typography variant={'caption'}>
+                            <Typography variant={'caption'} style={{ opacity: 0.65, lineHeight: '12px' }}>
                                 {new Date(timestamp).toDateString()}
                             </Typography>
                         </Box>

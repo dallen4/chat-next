@@ -1,5 +1,17 @@
 import React, { useRef, useState } from 'react';
 import TextField from '@material-ui/core/TextField';
+import { createStyles, makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles((theme) =>
+    createStyles({
+        messageInput: {
+            height: '100%',
+            '& > div': {
+                height: '100%',
+            },
+        }
+    }),
+);
 
 const MessageInput = ({
     disabled,
@@ -7,6 +19,7 @@ const MessageInput = ({
     messageInput,
     setMessageInput,
 }: MessageInputProps) => {
+    const classes = useStyles();
     const inputRef = useRef<HTMLInputElement>(null);
 
     const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -25,7 +38,8 @@ const MessageInput = ({
             onChange={(event) => setMessageInput(event.target.value)}
             onKeyDown={onKey}
             multiline
-            rows={2}
+            minRows={2}
+            className={classes.messageInput}
             variant={'outlined'}
             color={'primary'}
             placeholder={'Type your words here...'}
