@@ -9,9 +9,9 @@ const useStyles = makeStyles((theme) =>
     createStyles({
         drawerToolbarContent: {
             display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
             color: 'white',
         },
     }),
@@ -24,10 +24,10 @@ const StatusBar = ({ status }: { status: PeerStatus }) => {
         <Toolbar className={classes.drawerToolbarContent}>
             <Typography variant={'body1'}>
                 Status: {status === 'online' ? 'Ready' : 'Offline'}{' '}
-                <StatusIndicator status={status} />
             </Typography>
+            <StatusIndicator status={status} />
         </Toolbar>
     );
-}
+};
 
 export default StatusBar;
