@@ -6,14 +6,17 @@ import { useChat } from 'contexts/ChatContext';
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         messageBox: {
+            padding: theme.spacing(1),
+            height: '95px',
+            width: '100%',
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
             backgroundColor: theme.palette.primary.light,
         },
         sendButton: {
-            height: '75px',
-            width: '75px',
+            height: '79px',
+            width: '79px',
             marginLeft: '0.5rem',
         },
     }),
@@ -34,7 +37,7 @@ const MessageBox = ({ disabled }: MessageBoxProps) => {
     };
 
     return (
-        <Box padding={1} className={classes.messageBox}>
+        <Box className={classes.messageBox}>
             <MessageInput
                 messageInput={messageInput}
                 setMessageInput={setMessageInput}
