@@ -8,6 +8,8 @@ import List from '@material-ui/core/List';
 import ConnectionItem from 'atoms/ConnectionItem';
 import ReactPlayer from 'react-player';
 import { drawerWidth } from 'lib/constants';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -57,6 +59,11 @@ const Sidebar = () => {
             {mediaStream !== null && (
                 <ReactPlayer width={'100%'} height={'30%'} style={{}} url={mediaStream} />
             )}
+            <Box padding={0.5} textAlign={'center'}>
+                <Typography variant={'caption'} color={'primary'}>
+                    Copyright &copy; Nieky Allen {new Date().getFullYear()}.
+                </Typography>
+            </Box>
         </Drawer>
     );
 };
