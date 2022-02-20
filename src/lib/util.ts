@@ -1,25 +1,37 @@
-import { faker } from '@faker-js/faker';
+import { adjectives, animals, NumberDictionary, uniqueNamesGenerator } from 'unique-names-generator';
+import { nanoid } from 'nanoid';
 import randomColor from 'randomcolor';
 
-export const generateUsername = () => {
-    const animal = faker.animal.type();
-    const animalName = animal[0].toUpperCase() + animal.slice(1);
-    return faker.commerce.productAdjective() + animalName;
+export const generateUsername = (prevSeed?: string) => {
+    const seed = prevSeed || nanoid();
+
+    const [variant] = NumberDictionary.generate({ min: 1000, max: 9999 });
+
+    const username = uniqueNamesGenerator({
+        dictionaries: [adjectives, animals],
+        separator: '',
+        style: 'capital',
+        seed,
+    });
+
+    return username;
 };
 
 export const generateAvatarColor = () => {
     return randomColor({ luminosity: 'bright' });
 };
 
+// ref: https://github.com/davidmerfield/randomColor#options
 const hues = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'monochrome'];
 
-export const generateColorSet = () => {
-    const hue1 = hues[Math.floor(Math.random() * hues.length)];
-    const hue2 = hues[Math.floor(Math.random() * hues.length)];
-    const hue3 = hues[Math.floor(Math.random() * hues.length)];
+export const generateColorSet = (amount: number = 2) => {
+    const colors = new Array<string>(amount);
 
-    const color1 = randomColor({ hue: hue1, luminosity: 'bright' });
-    const color2 = randomColor({ hue: hue2, luminosity: 'bright' });
-    const color3 = randomColor({ hue: hue3, luminosity: 'bright' });
-    return [color1, color2, color3];
+    for (let cIndex = 0; cIndex < amount; cIndex++) {
+        const hue = hues[Math.floor(Math.random() * hues.length)];
+
+        colors[cIndex] = randomColor({ hue, luminosity: 'bright' });
+    }
+
+    return colors;
 };
