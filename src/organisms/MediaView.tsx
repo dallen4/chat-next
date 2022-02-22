@@ -1,13 +1,12 @@
 import React from 'react';
 import { useChat } from 'contexts/ChatContext';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
-import MessageItem from 'atoms/MessageItem';
 import MessageBox from 'molecules/MessageBox';
 import Box from '@material-ui/core/Box';
 import ReactPlayer from 'react-player';
 import IconButton from '@material-ui/core/IconButton';
 import PhoneHangup from 'mdi-material-ui/PhoneHangup';
+import MessageList from 'molecules/MessageList';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -16,7 +15,7 @@ const useStyles = makeStyles((theme) =>
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: theme.palette.secondary.main,
-            height: `calc(100vh - 64px - 95px)`,
+            height: `calc(100vh - 64px)`,
         },
         messagesListContainer: {
             overflow: 'scroll',
@@ -40,11 +39,7 @@ const MediaView = () => {
         <main className={classes.mainContainer}>
             {peerMediaStream === null ? (
                 <>
-                    <List className={classes.messagesListContainer}>
-                        {messages.map((message, index) => (
-                            <MessageItem key={index} message={message} />
-                        ))}
-                    </List>
+                    <MessageList messages={messages} />
                     <MessageBox disabled={status !== 'connected'} />
                 </>
             ) : (
