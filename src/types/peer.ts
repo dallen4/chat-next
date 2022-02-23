@@ -1,7 +1,8 @@
 import Peer from 'peerjs';
 
 export interface PeerUtils {
-    initPeer: () => Peer;
+    initPeer: (id: string) => Peer;
+    getMediaStream: (audioOnly?: boolean) => Promise<MediaStream>;
 }
 
 export interface ConnectionInstance {
@@ -17,11 +18,9 @@ export interface ConnectionMap {
     [key: string]: ConnectionInstance;
 }
 
-export type Message = string;
-
 export interface PeerHanlders {
     onNewConnection: (connection: ConnectionInstance) => void;
-    onMessageReceived: (message: Message) => void;
+    onMessageReceived: (message: string) => void;
     onRemoteMediaReceived: (stream: MediaStream) => void;
     onLocalMediaStreamStarted: (stream: MediaStream) => void;
 }

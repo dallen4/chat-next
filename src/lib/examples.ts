@@ -1,0 +1,96 @@
+import { nanoid } from 'nanoid';
+import { Message } from 'types/message';
+
+export const exampleMessages: Message[] = [
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'system',
+        author: 'System',
+        content: 'Welcome to uChat!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'John',
+        content: 'Hello!',
+    },
+    {
+        id: nanoid(),
+        timestamp: Date.now(),
+        type: 'user',
+        author: 'Jane',
+        content: 'what is good today?',
+    },
+];

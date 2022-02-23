@@ -8,10 +8,6 @@ class CustomDocument extends Document {
             <Html lang="en">
                 <Head>
                     <meta charSet="utf-8" />
-                    <meta
-                        name="viewport"
-                        content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
-                    />
                     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
                     {/* PWA primary color */}
                     {/* <meta name="theme-color" content={theme.palette.primary.main} /> */}

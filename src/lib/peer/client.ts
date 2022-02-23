@@ -4,7 +4,6 @@ import {
     ConnectionMap,
     ConnectionInstance,
     PeerHanlders,
-    Message,
 } from 'types/peer';
 import Peer from 'peerjs';
 
@@ -19,7 +18,19 @@ export default class PeerClient {
         this.mediaStream = null;
     }
 
-    async init(handlers: PeerHanlders) {
+    async create(id: string) {
+        if (isClient) {
+            const { initPeer }: PeerUtils = require('.');
+
+            return new Promise<Peer>((resolve, reject) => {
+                const peer = initPeer(id);
+
+                resolve(peer);
+            });
+        }
+    }
+
+    async init(id: string, handlers: PeerHanlders) {
         if (isClient) {
             const { initPeer }: PeerUtils = require('.');
             const {
@@ -30,7 +41,7 @@ export default class PeerClient {
             } = handlers;
 
             return new Promise((resolve, reject) => {
-                this.peerClient = initPeer();
+                this.peerClient = initPeer(id);
 
                 this.peerClient.on('connection', (connection: Peer.DataConnection) => {
                     connection.on('open', () => {
@@ -135,12 +146,12 @@ export default class PeerClient {
         });
     }
 
-    pushMessage = (peerId: string, message: Message) => {
+    pushMessage = (peerId: string, message: string) => {
         this.connections[peerId].messages.push(message);
         return [...this.connections[peerId].messages];
     };
 
-    sendMessage = (peerId: string, message: Message) => {
+    sendMessage = (peerId: string, message: string) => {
         this.connections[peerId].client.send(message);
         return this.pushMessage(peerId, message);
     };

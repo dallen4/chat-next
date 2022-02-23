@@ -1,6 +1,5 @@
 import { Theme, makeStyles, createStyles } from '@material-ui/core';
-
-const drawerWidth = 280;
+import { drawerWidth } from 'lib/constants';
 
 const styles: any = (theme: Theme) =>
     createStyles({
@@ -8,8 +7,18 @@ const styles: any = (theme: Theme) =>
             display: 'flex',
         },
         appBar: {
+            transition: theme.transitions.create(['margin', 'width'], {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.leavingScreen,
+            }),
+        },
+        appBarShift: {
             width: `calc(100% - ${drawerWidth}px)`,
             marginLeft: drawerWidth,
+            transition: theme.transitions.create(['margin', 'width'], {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
         },
         toolbar: {
             display: 'flex',
@@ -17,21 +26,10 @@ const styles: any = (theme: Theme) =>
             justifyContent: 'space-between',
             alignItems: 'center',
         },
-        drawer: {
-            width: drawerWidth,
-            flexShrink: 0,
-        },
-        drawerPaper: {
-            width: drawerWidth,
-            backgroundColor: theme.palette.secondary.main,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-        },
         // necessary for content to be below app bar
         toolbarSpacer: theme.mixins.toolbar,
         content: {
-            width: `calc(100% - ${drawerWidth}px)`,
+            width: `100%`,
             height: '100vh',
             maxHeight: '100vh',
             flexGrow: 1,
@@ -39,47 +37,22 @@ const styles: any = (theme: Theme) =>
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
+            transition: theme.transitions.create('margin', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.leavingScreen,
+            }),
+            marginLeft: -drawerWidth,
         },
-        mainContainer: {
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: theme.palette.secondary.main,
-        },
-        messagesListContainer: {
-            overflow: 'scroll',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-        },
-        messageBox: {
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: theme.palette.primary.light,
-        },
-        drawerToolbarContent: {
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            color: 'white',
-        },
-        white: {
-            color: 'white',
-        },
-        activeAddPeer: {
-            color: theme.palette.secondary.light,
+        contentShift: {
+            transition: theme.transitions.create('margin', {
+                easing: theme.transitions.easing.easeOut,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
+            marginLeft: 0,
         },
         bothButtonText: {
             color: theme.palette.primary.main,
             fontSize: '0.9rem',
-        },
-        activeCall: {
-            backgroundColor: theme.palette.system.success,
-            color: theme.palette.common.white,
         },
         mediaToggleIcons: {
             fontSize: '1.1rem',
