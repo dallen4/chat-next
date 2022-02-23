@@ -3,9 +3,8 @@ import { PeerErrorType, PeerErrorTypes } from 'lib/constants';
 import { exampleMessages } from 'lib/examples';
 import { getUserMeta, setUserMeta } from 'lib/store';
 import { generateColorSet, generateUsername } from 'lib/util';
-import Peer from 'peerjs';
-import { DataConnection } from 'peerjs/lib/dataconnection';
-import { MediaConnection } from 'peerjs/lib/mediaconnection';
+import { nanoid } from 'nanoid';
+import Peer, { DataConnection, MediaConnection } from 'peerjs';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Message } from 'types/message';
 import { PeerStatus, PeerUtils } from 'types/peer';
@@ -15,8 +14,8 @@ export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 export type ChatInfo = {
     peer: Peer;
     status: ChatStatus;
-    connections: Peer.DataConnection[];
-    connection: Peer.DataConnection;
+    connections: DataConnection[];
+    connection: DataConnection;
     messages: Message[];
     startCall: () => Promise<void>;
     mediaStream?: MediaStream;
@@ -45,7 +44,7 @@ export const ChatProvider: React.FC = ({ children }) => {
 
     const connection = useMemo(() => {
         if (currentConnectionId) {
-            return connections.find(c => c.label === currentConnectionId);
+            return connections.find((c) => c.label === currentConnectionId);
         }
         return null;
     }, [connections, currentConnectionId]);
@@ -77,14 +76,18 @@ export const ChatProvider: React.FC = ({ children }) => {
         }
     };
 
-    function onConnection(newConnection: Peer.DataConnection) {
+    function onConnection(newConnection: DataConnection) {
         newConnection.on('open', () => {
-            newConnection.send({
+            const successMsg: Message = {
+                id: nanoid(),
                 timestamp: Date.now(),
                 type: 'system',
                 author: 'Bot',
                 content: `${peerRef.current.id} has joined the chat`,
-            });
+            };
+
+            newConnection.send(successMsg);
+
             setStatus('connected');
             setCurrentConnectionId(newConnection.label);
             hydrateConnections();
@@ -194,6 +197,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     const sendMessage = async (content: string) => {
         if (connection) {
             const message: Message = {
+                id: nanoid(),
                 timestamp: Date.now(),
                 type: 'user',
                 author: peerRef.current.id,
@@ -221,7 +225,10 @@ export const ChatProvider: React.FC = ({ children }) => {
         if (connection) {
             const stream = await getLocalStream();
 
-            const call = peerRef.current.call(connection.peer, mediaStream) as MediaConnection;
+            const call = peerRef.current.call(
+                connection.peer,
+                mediaStream,
+            ) as MediaConnection;
             call.on('stream', setPeerMediaStream);
             call.on('close', () => alert(`Call with ${call.peer} ended`));
 
