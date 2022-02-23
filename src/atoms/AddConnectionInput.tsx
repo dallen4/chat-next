@@ -42,6 +42,7 @@ const AddConnectionInput = ({ onAdd, disabled }: AddConnectionInputProps) => {
             <IconButton
                 disabled={disabled || peerIdInput.length < 5}
                 onClick={() => onAdd(peerIdInput)}
+                size={'small'}
             >
                 <Plus
                     className={
