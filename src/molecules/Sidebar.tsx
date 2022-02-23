@@ -1,6 +1,6 @@
 import React from 'react';
 import { useChat } from 'contexts/ChatContext';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
+import { createStyles, makeStyles, useTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import StatusBar from 'atoms/StatusBar';
 import AddConnectionInput from 'atoms/AddConnectionInput';
@@ -10,6 +10,8 @@ import ReactPlayer from 'react-player';
 import { drawerWidth } from 'lib/constants';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
+import { IconButton, Toolbar, useMediaQuery } from '@material-ui/core';
+import { ChevronLeft } from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -24,21 +26,30 @@ const useStyles = makeStyles((theme) =>
             flexDirection: 'column',
             justifyContent: 'space-between',
         },
+        statusToolbar: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
     }),
 );
 
-const Sidebar = () => {
+const Sidebar = ({ open, close }: SidebarProps) => {
     const classes = useStyles();
     const { isAuthenticated, connect, connections, mediaStream } = useChat();
+    const theme = useTheme();
+    const mobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
         <Drawer
-            variant={'permanent'}
+            variant={mobile ? 'temporary' : 'persistent'}
+            open={open}
             anchor={'left'}
             className={classes.drawer}
             classes={{ paper: classes.drawerPaper }}
         >
-            <div>
+            <Toolbar className={classes.statusToolbar}>
                 <StatusBar
                     status={
                         // status === 'connected'
@@ -49,6 +60,13 @@ const Sidebar = () => {
                         isAuthenticated ? 'online' : 'offline'
                     }
                 />
+                {open && (
+                    <IconButton onClick={close} size={'small'}>
+                        <ChevronLeft style={{ color: 'white' }} />
+                    </IconButton>
+                )}
+            </Toolbar>
+            <div style={{ flex: 1, padding: theme.spacing(1) }}>
                 <AddConnectionInput onAdd={connect} disabled={!isAuthenticated} />
                 <List style={{ color: 'white' }}>
                     {connections.map((connection) => (
@@ -66,6 +84,11 @@ const Sidebar = () => {
             </Box>
         </Drawer>
     );
+};
+
+export type SidebarProps = {
+    open: boolean;
+    close: () => void;
 };
 
 export default Sidebar;
