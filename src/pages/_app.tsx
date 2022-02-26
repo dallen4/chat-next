@@ -5,30 +5,18 @@ import { useRouter } from 'next/router';
 import { SnackbarProvider } from 'notistack';
 import { initGA, logPageView } from 'lib/google/analytics';
 import theme from 'theme';
-import OrbitDB from 'orbit-db';
-import { initOrbit } from 'lib/db';
 import Head from 'next/head';
 import { ChatProvider } from 'contexts/ChatContext';
 import { NextSeo } from 'next-seo';
 
 function ChatApp({ Component, pageProps }: AppProps) {
     const router = useRouter();
-    const [orbit, setOrbit] = React.useState<OrbitDB>(null);
 
     React.useEffect(() => {
         initGA();
         logPageView(window.location.pathname);
         router.events.on('routeChangeComplete', logPageView);
-
-        initOrbit().then(setOrbit).catch(console.error);
     }, []);
-
-    // const initProfile = async () => {
-    //     const username = generateUsername();
-    //     const newDB = await orbit.keyvalue(username);
-    //     setUsername(username);
-    //     setProfileDB(newDB);
-    // }
 
     return (
         <>
