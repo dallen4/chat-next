@@ -1,4 +1,4 @@
-import localforage from "localforage";
+import localforage from 'localforage';
 
 const USER_META_KEY = 'uchat-id';
 
