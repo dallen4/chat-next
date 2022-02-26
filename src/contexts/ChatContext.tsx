@@ -16,6 +16,7 @@ export type ChatInfo = {
     status: ChatStatus;
     connections: DataConnection[];
     connection: DataConnection;
+    setCurrentConnectionId: (id: string) => void;
     messages: Message[];
     startCall: () => Promise<void>;
     mediaStream?: MediaStream;
@@ -37,7 +38,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
     const [peerMediaStream, setPeerMediaStream] = useState<MediaStream>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<Record<string, Message[]>>({});
     const [call, setCall] = useState<MediaConnection>(null);
     const [connections, setConnections] = useState<DataConnection[]>([]);
     const [currentConnectionId, setCurrentConnectionId] = useState<string>(null);
@@ -53,8 +54,11 @@ export const ChatProvider: React.FC = ({ children }) => {
 
     const isAuthenticated = peerStatus === 'online';
 
-    const onMessage = (data: Message) => {
-        setMessages((messages) => [...messages, data]);
+    const onMessage = (connectionId: string, data: Message) => {
+        setMessages((messages) => ({
+            ...messages,
+            [connectionId]: [...(messages[connectionId] || []), data],
+        }));
     };
 
     const onCall = async (call: MediaConnection) => {
@@ -90,10 +94,14 @@ export const ChatProvider: React.FC = ({ children }) => {
 
             setStatus('connected');
             setCurrentConnectionId(newConnection.label);
+            setMessages((messages) => ({
+                ...messages,
+                [newConnection.label]: [successMsg],
+            }));
             hydrateConnections();
         });
 
-        newConnection.on('data', onMessage);
+        newConnection.on('data', data => onMessage(newConnection.label, data));
 
         newConnection.on('error', (err) => {
             console.error(err);
@@ -107,13 +115,13 @@ export const ChatProvider: React.FC = ({ children }) => {
     }
 
     useEffect(() => {
-        window.onbeforeunload = (e) => {
-            const event = e || window.event;
+        // window.onbeforeunload = (e) => {
+        //     const event = e || window.event;
 
-            if (event) event.returnValue = 'Are you sure you want to leave?';
+        //     if (event) event.returnValue = 'Are you sure you want to leave?';
 
-            return 'Are you sure you want to leave?';
-        };
+        //     return 'Are you sure you want to leave?';
+        // };
 
         return () => {
             if (peerRef.current) {
@@ -206,7 +214,7 @@ export const ChatProvider: React.FC = ({ children }) => {
 
             connection.send(message);
 
-            onMessage(message);
+            onMessage(currentConnectionId, message);
         }
     };
 
@@ -214,8 +222,8 @@ export const ChatProvider: React.FC = ({ children }) => {
         let stream = mediaStream;
 
         if (!stream) {
-            const { getMediaStream }: PeerUtils = require('../lib/peer');
-            stream = await getMediaStream();
+            const { getCameraStream }: PeerUtils = require('../lib/peer');
+            stream = await getCameraStream();
         }
 
         return stream;
@@ -262,7 +270,8 @@ export const ChatProvider: React.FC = ({ children }) => {
                 status,
                 connections,
                 connection,
-                messages,
+                setCurrentConnectionId,
+                messages: (currentConnectionId && messages[currentConnectionId]) ? messages[currentConnectionId] : [],
                 startCall,
                 mediaStream,
                 peerMediaStream,
