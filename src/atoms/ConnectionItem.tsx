@@ -22,7 +22,7 @@ const ConnectionItem = ({ connection }: ConnectionItemProps) => {
     const { setCurrentConnectionId } = useChat();
 
     return (
-        <ListItem onClick={() => setCurrentConnectionId(connection.label)} >
+        <ListItem onClick={() => setCurrentConnectionId(connection.peer)} >
             <Typography>{connection.peer}</Typography>
             <IconButton
                 // onClick={() =>
