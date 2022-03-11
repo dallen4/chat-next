@@ -2,8 +2,9 @@ import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
+import { useChat } from 'contexts/ChatContext';
 import Plus from 'mdi-material-ui/Plus';
-import React from 'react';
+import React, { useState } from 'react';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -16,9 +17,22 @@ const useStyles = makeStyles((theme) =>
     }),
 );
 
-const AddConnectionInput = ({ onAdd, disabled }: AddConnectionInputProps) => {
+const AddConnectionInput = () => {
     const classes = useStyles();
-    const [peerIdInput, setPeerIdInput] = React.useState('');
+    const [peerIdInput, setPeerIdInput] = useState('');
+    const { isAuthenticated, connect } = useChat();
+
+    const onSubmit = () => {
+        connect(peerIdInput);
+        setPeerIdInput('');
+    };
+
+    const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            onSubmit();
+        }
+    };
 
     return (
         <Box
@@ -33,15 +47,16 @@ const AddConnectionInput = ({ onAdd, disabled }: AddConnectionInputProps) => {
                 name={'peerIdInput'}
                 value={peerIdInput}
                 onChange={(event) => setPeerIdInput(event.target.value)}
+                onKeyDown={onKey}
                 variant={'outlined'}
                 color={'primary'}
                 placeholder={'Peer ID'}
-                disabled={disabled}
+                disabled={!isAuthenticated}
                 fullWidth
             />
             <IconButton
-                disabled={disabled || peerIdInput.length < 5}
-                onClick={() => onAdd(peerIdInput)}
+                disabled={!isAuthenticated || peerIdInput.length < 5}
+                onClick={onSubmit}
                 size={'small'}
             >
                 <Plus
@@ -52,11 +67,6 @@ const AddConnectionInput = ({ onAdd, disabled }: AddConnectionInputProps) => {
             </IconButton>
         </Box>
     );
-};
-
-type AddConnectionInputProps = {
-    onAdd: (peerId: string) => void;
-    disabled?: boolean;
 };
 
 export default AddConnectionInput;
