@@ -10,6 +10,9 @@ import { useChat } from 'contexts/ChatContext';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
+        white: {
+            color: theme.palette.common.white,
+        },
         activeCall: {
             backgroundColor: theme.palette.system.success,
             color: theme.palette.common.white,
@@ -22,18 +25,21 @@ const ConnectionItem = ({ connection }: ConnectionItemProps) => {
     const { setCurrentConnectionId } = useChat();
 
     return (
-        <ListItem onClick={() => setCurrentConnectionId(connection.peer)} >
+        <ListItem
+            className={classes.white}
+            onClick={() => setCurrentConnectionId(connection.peer)}
+        >
             <Typography>{connection.peer}</Typography>
             <IconButton
-                // onClick={() =>
-                //     peerClient.callPeer(
-                //         connection.connectionId,
-                //         setRemoteMediaStream,
-                //         setLocalMediaStream,
-                //         true,
-                //     )
-                // }
-                // disabled={Boolean(peerMediaStream)}
+            // onClick={() =>
+            //     peerClient.callPeer(
+            //         connection.connectionId,
+            //         setRemoteMediaStream,
+            //         setLocalMediaStream,
+            //         true,
+            //     )
+            // }
+            // disabled={Boolean(peerMediaStream)}
             >
                 <Phone />
             </IconButton>

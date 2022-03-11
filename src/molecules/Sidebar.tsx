@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) =>
 
 const Sidebar = ({ open, close }: SidebarProps) => {
     const classes = useStyles();
-    const { isAuthenticated, connect, connections, mediaStream } = useChat();
+    const { isAuthenticated, connections, mediaStream } = useChat();
     const theme = useTheme();
     const mobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -67,8 +67,8 @@ const Sidebar = ({ open, close }: SidebarProps) => {
                 )}
             </Toolbar>
             <div style={{ flex: 1, padding: theme.spacing(1) }}>
-                <AddConnectionInput onAdd={connect} disabled={!isAuthenticated} />
-                <List style={{ color: 'white' }}>
+                <AddConnectionInput />
+                <List>
                     {connections.map((connection) => (
                         <ConnectionItem connection={connection} />
                     ))}
