@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Theme, makeStyles, createStyles, Button, Box } from '@material-ui/core';
 import MessageInput from 'atoms/MessageInput';
-import { useChat } from 'contexts/ChatContext';
+import { useMessages } from 'contexts/MessagesContext';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -26,7 +26,7 @@ const MessageBox = ({ disabled }: MessageBoxProps) => {
     const classes = useStyles();
     const [messageInput, setMessageInput] = useState('');
 
-    const { sendMessage } = useChat();
+    const { sendMessage } = useMessages();
 
     const onSend = () => {
         if (messageInput.length > 0) {
