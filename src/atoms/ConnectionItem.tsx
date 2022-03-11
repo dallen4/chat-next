@@ -6,6 +6,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Phone from 'mdi-material-ui/Phone';
 import Video from 'mdi-material-ui/Video';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
+import { useChat } from 'contexts/ChatContext';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -18,9 +19,10 @@ const useStyles = makeStyles((theme) =>
 
 const ConnectionItem = ({ connection }: ConnectionItemProps) => {
     const classes = useStyles();
+    const { setCurrentConnectionId } = useChat();
 
     return (
-        <ListItem>
+        <ListItem onClick={() => setCurrentConnectionId(connection.peer)} >
             <Typography>{connection.peer}</Typography>
             <IconButton
                 // onClick={() =>

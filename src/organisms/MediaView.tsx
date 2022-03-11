@@ -7,6 +7,7 @@ import ReactPlayer from 'react-player';
 import IconButton from '@material-ui/core/IconButton';
 import PhoneHangup from 'mdi-material-ui/PhoneHangup';
 import MessageList from 'molecules/MessageList';
+import { useMessages } from 'contexts/MessagesContext';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -33,7 +34,8 @@ const useStyles = makeStyles((theme) =>
 
 const MediaView = () => {
     const classes = useStyles();
-    const { messages, peerMediaStream, status } = useChat();
+    const { peerMediaStream, status } = useChat();
+    const { messages } = useMessages();
 
     return (
         <main className={classes.mainContainer}>

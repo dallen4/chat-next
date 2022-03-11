@@ -16,7 +16,7 @@ export type ChatInfo = {
     status: ChatStatus;
     connections: DataConnection[];
     connection: DataConnection;
-    messages: Message[];
+    setCurrentConnectionId: (id: string) => void;
     startCall: () => Promise<void>;
     mediaStream?: MediaStream;
     peerMediaStream?: MediaStream;
@@ -24,7 +24,6 @@ export type ChatInfo = {
     authenticate: () => Promise<void>;
     isAuthenticated: boolean;
     connect: (id: string) => Promise<void>;
-    sendMessage: (message: string) => Promise<void>;
 };
 
 export const ChatContext = createContext<ChatInfo>(null);
@@ -37,14 +36,13 @@ export const ChatProvider: React.FC = ({ children }) => {
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
     const [peerMediaStream, setPeerMediaStream] = useState<MediaStream>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
     const [call, setCall] = useState<MediaConnection>(null);
     const [connections, setConnections] = useState<DataConnection[]>([]);
     const [currentConnectionId, setCurrentConnectionId] = useState<string>(null);
 
     const connection = useMemo(() => {
         if (currentConnectionId) {
-            return connections.find((c) => c.label === currentConnectionId);
+            return connections.find((c) => c.peer === currentConnectionId);
         }
         return null;
     }, [connections, currentConnectionId]);
@@ -52,10 +50,6 @@ export const ChatProvider: React.FC = ({ children }) => {
     const { pushErrorMessage } = useNotification();
 
     const isAuthenticated = peerStatus === 'online';
-
-    const onMessage = (data: Message) => {
-        setMessages((messages) => [...messages, data]);
-    };
 
     const onCall = async (call: MediaConnection) => {
         if (window.confirm(`${call.peer} is calling, would you like to answer?`)) {
@@ -89,11 +83,9 @@ export const ChatProvider: React.FC = ({ children }) => {
             newConnection.send(successMsg);
 
             setStatus('connected');
-            setCurrentConnectionId(newConnection.label);
+            setCurrentConnectionId(newConnection.peer);
             hydrateConnections();
         });
-
-        newConnection.on('data', onMessage);
 
         newConnection.on('error', (err) => {
             console.error(err);
@@ -107,13 +99,13 @@ export const ChatProvider: React.FC = ({ children }) => {
     }
 
     useEffect(() => {
-        window.onbeforeunload = (e) => {
-            const event = e || window.event;
+        // window.onbeforeunload = (e) => {
+        //     const event = e || window.event;
 
-            if (event) event.returnValue = 'Are you sure you want to leave?';
+        //     if (event) event.returnValue = 'Are you sure you want to leave?';
 
-            return 'Are you sure you want to leave?';
-        };
+        //     return 'Are you sure you want to leave?';
+        // };
 
         return () => {
             if (peerRef.current) {
@@ -122,7 +114,6 @@ export const ChatProvider: React.FC = ({ children }) => {
 
                 if (connections.length) {
                     connections.forEach((connection) => {
-                        connection.off('data', onMessage);
                         connection.close();
                     });
                 }
@@ -194,28 +185,12 @@ export const ChatProvider: React.FC = ({ children }) => {
         onConnection(newConnection);
     };
 
-    const sendMessage = async (content: string) => {
-        if (connection) {
-            const message: Message = {
-                id: nanoid(),
-                timestamp: Date.now(),
-                type: 'user',
-                author: peerRef.current.id,
-                content,
-            };
-
-            connection.send(message);
-
-            onMessage(message);
-        }
-    };
-
     const getLocalStream = async () => {
         let stream = mediaStream;
 
         if (!stream) {
-            const { getMediaStream }: PeerUtils = require('../lib/peer');
-            stream = await getMediaStream();
+            const { getCameraStream }: PeerUtils = require('../lib/peer');
+            stream = await getCameraStream();
         }
 
         return stream;
@@ -262,14 +237,13 @@ export const ChatProvider: React.FC = ({ children }) => {
                 status,
                 connections,
                 connection,
-                messages,
+                setCurrentConnectionId,
                 startCall,
                 mediaStream,
                 peerMediaStream,
                 call,
                 authenticate,
                 connect,
-                sendMessage,
             }}
         >
             {children}
