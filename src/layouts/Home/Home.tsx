@@ -7,6 +7,8 @@ import {
     CircularProgress,
     ButtonGroup,
     IconButton,
+    useMediaQuery,
+    useTheme,
 } from '@material-ui/core';
 import { Video, Chat } from 'mdi-material-ui';
 import useStyles from './styles';
@@ -22,7 +24,10 @@ const Home = () => {
     const { authenticate, isAuthenticated, status, connection, peer, peerMediaStream } =
         useChat();
 
-    const [sidebarOpen, setSidebarOpen] = React.useState(false);
+    const theme = useTheme();
+    const mobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const [sidebarOpen, setSidebarOpen] = React.useState(!mobile);
     const [mediaViewMode, setMediaViewMode] = React.useState<MediaViewMode>('Chat');
 
     const MediaViewSelector = () => (
