@@ -17,7 +17,6 @@ export type ChatInfo = {
     connections: DataConnection[];
     connection: DataConnection;
     setCurrentConnectionId: (id: string) => void;
-    messages: Message[];
     startCall: () => Promise<void>;
     mediaStream?: MediaStream;
     peerMediaStream?: MediaStream;
@@ -25,7 +24,6 @@ export type ChatInfo = {
     authenticate: () => Promise<void>;
     isAuthenticated: boolean;
     connect: (id: string) => Promise<void>;
-    sendMessage: (message: string) => Promise<void>;
 };
 
 export const ChatContext = createContext<ChatInfo>(null);
@@ -38,14 +36,13 @@ export const ChatProvider: React.FC = ({ children }) => {
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
     const [peerMediaStream, setPeerMediaStream] = useState<MediaStream>(null);
-    const [messages, setMessages] = useState<Record<string, Message[]>>({});
     const [call, setCall] = useState<MediaConnection>(null);
     const [connections, setConnections] = useState<DataConnection[]>([]);
     const [currentConnectionId, setCurrentConnectionId] = useState<string>(null);
 
     const connection = useMemo(() => {
         if (currentConnectionId) {
-            return connections.find((c) => c.label === currentConnectionId);
+            return connections.find((c) => c.peer === currentConnectionId);
         }
         return null;
     }, [connections, currentConnectionId]);
@@ -53,13 +50,6 @@ export const ChatProvider: React.FC = ({ children }) => {
     const { pushErrorMessage } = useNotification();
 
     const isAuthenticated = peerStatus === 'online';
-
-    const onMessage = (connectionId: string, data: Message) => {
-        setMessages((messages) => ({
-            ...messages,
-            [connectionId]: [...(messages[connectionId] || []), data],
-        }));
-    };
 
     const onCall = async (call: MediaConnection) => {
         if (window.confirm(`${call.peer} is calling, would you like to answer?`)) {
@@ -93,15 +83,9 @@ export const ChatProvider: React.FC = ({ children }) => {
             newConnection.send(successMsg);
 
             setStatus('connected');
-            setCurrentConnectionId(newConnection.label);
-            setMessages((messages) => ({
-                ...messages,
-                [newConnection.label]: [successMsg],
-            }));
+            setCurrentConnectionId(newConnection.peer);
             hydrateConnections();
         });
-
-        newConnection.on('data', data => onMessage(newConnection.label, data));
 
         newConnection.on('error', (err) => {
             console.error(err);
@@ -130,7 +114,6 @@ export const ChatProvider: React.FC = ({ children }) => {
 
                 if (connections.length) {
                     connections.forEach((connection) => {
-                        connection.off('data', onMessage);
                         connection.close();
                     });
                 }
@@ -202,22 +185,6 @@ export const ChatProvider: React.FC = ({ children }) => {
         onConnection(newConnection);
     };
 
-    const sendMessage = async (content: string) => {
-        if (connection) {
-            const message: Message = {
-                id: nanoid(),
-                timestamp: Date.now(),
-                type: 'user',
-                author: peerRef.current.id,
-                content,
-            };
-
-            connection.send(message);
-
-            onMessage(currentConnectionId, message);
-        }
-    };
-
     const getLocalStream = async () => {
         let stream = mediaStream;
 
@@ -271,14 +238,12 @@ export const ChatProvider: React.FC = ({ children }) => {
                 connections,
                 connection,
                 setCurrentConnectionId,
-                messages: (currentConnectionId && messages[currentConnectionId]) ? messages[currentConnectionId] : [],
                 startCall,
                 mediaStream,
                 peerMediaStream,
                 call,
                 authenticate,
                 connect,
-                sendMessage,
             }}
         >
             {children}
