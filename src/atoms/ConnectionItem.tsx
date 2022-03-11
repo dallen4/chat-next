@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) =>
 
 const ConnectionItem = ({ connection }: ConnectionItemProps) => {
     const classes = useStyles();
-    const { setCurrentConnectionId } = useChat();
+    const { setCurrentConnectionId, startCall, call } = useChat();
 
     return (
         <ListItem
@@ -31,28 +31,14 @@ const ConnectionItem = ({ connection }: ConnectionItemProps) => {
         >
             <Typography>{connection.peer}</Typography>
             <IconButton
-            // onClick={() =>
-            //     peerClient.callPeer(
-            //         connection.connectionId,
-            //         setRemoteMediaStream,
-            //         setLocalMediaStream,
-            //         true,
-            //     )
-            // }
-            // disabled={Boolean(peerMediaStream)}
+                onClick={() => startCall(connection.peer, true)}
+                className={call && classes.activeCall}
             >
                 <Phone />
             </IconButton>
             <IconButton
-                // onClick={() =>
-                //     peerClient.callPeer(
-                //         connection.connectionId,
-                //         setRemoteMediaStream,
-                //         setLocalMediaStream,
-                //     )
-                // }
-                // disabled={Boolean(peerMediaStream)}
-                className={true && classes.activeCall}
+                onClick={() => startCall(connection.peer, false)}
+                className={call && classes.activeCall}
             >
                 <Video />
             </IconButton>
