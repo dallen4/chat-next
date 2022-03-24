@@ -9,6 +9,7 @@ const useStyles = makeStyles((theme: Theme) =>
             padding: theme.spacing(1),
             height: '95px',
             width: '100%',
+            maxWidth: '100vw',
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',

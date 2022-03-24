@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     AppBar,
     Toolbar,
@@ -29,6 +29,10 @@ const Home = () => {
 
     const [sidebarOpen, setSidebarOpen] = React.useState(!mobile);
     const [mediaViewMode, setMediaViewMode] = React.useState<MediaViewMode>('Chat');
+
+    useEffect(() => {
+        setSidebarOpen(!mobile);
+    }, []);
 
     const MediaViewSelector = () => (
         <ButtonGroup disableElevation>
@@ -64,7 +68,7 @@ const Home = () => {
             <Sidebar open={sidebarOpen} close={() => setSidebarOpen(false)} />
             <AppBar
                 color={'secondary'}
-                className={clsx(classes.appBar, {
+                className={clsx({
                     [classes.appBarShift]: sidebarOpen,
                 })}
             >

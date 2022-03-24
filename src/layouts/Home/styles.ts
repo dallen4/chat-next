@@ -6,19 +6,9 @@ const styles: any = (theme: Theme) =>
         root: {
             display: 'flex',
         },
-        appBar: {
-            transition: theme.transitions.create(['margin', 'width'], {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.leavingScreen,
-            }),
-        },
         appBarShift: {
             width: `calc(100% - ${drawerWidth}px)`,
             marginLeft: drawerWidth,
-            transition: theme.transitions.create(['margin', 'width'], {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-            }),
         },
         toolbar: {
             display: 'flex',
@@ -37,17 +27,11 @@ const styles: any = (theme: Theme) =>
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.leavingScreen,
-            }),
-            marginLeft: -drawerWidth,
+            [theme.breakpoints.up('sm')]: {
+                marginLeft: -drawerWidth,
+            },
         },
         contentShift: {
-            transition: theme.transitions.create('margin', {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen,
-            }),
             marginLeft: 0,
         },
         bothButtonText: {

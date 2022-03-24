@@ -10,6 +10,10 @@ import { ChatProvider } from 'contexts/ChatContext';
 import { NextSeo } from 'next-seo';
 import { MessagesProvider } from 'contexts/MessagesContext';
 
+const title = 'uChat';
+
+const description = 'uChat is a peer-to-peer chat application for text, audio, and video.';
+
 function ChatApp({ Component, pageProps }: AppProps) {
     const router = useRouter();
 
@@ -28,16 +32,13 @@ function ChatApp({ Component, pageProps }: AppProps) {
                 />
             </Head>
             <NextSeo
-                title={'uChat'}
-                description={
-                    'uChat is a peer-to-peer chat application for text, audio, and video.'
-                }
+                title={title}
+                description={description}
                 openGraph={{
                     type: 'website',
                     url: 'https://chat.nieky.dev',
-                    title: 'uChat',
-                    description:
-                        'uChat is a peer-to-peer chat application for text, audio, and video.',
+                    title,
+                    description,
                 }}
             />
             <ThemeProvider theme={theme}>
