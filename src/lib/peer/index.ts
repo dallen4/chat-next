@@ -2,11 +2,9 @@ import Peer from 'peerjs';
 
 export const initPeer = (id: string) =>
     new Peer(id, {
-        // host: 'localhost',
-        // key: 'chat-next',
-        // port: 3000,
-        // path: '/api/connect',
-        // secure: false,
+        host: 'uchat-server.herokuapp.com',
+        secure: true,
+        port: 443,
     });
 
 export const getCameraStream = async (audioOnly = false): Promise<MediaStream> => {
