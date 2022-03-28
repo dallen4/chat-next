@@ -1,16 +1,26 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { useNotification } from 'hooks/use-notification';
 import { PeerErrorType, PeerErrorTypes } from 'lib/constants';
-import { setUserMeta } from 'lib/store';
+import { setUserMeta, getUserMeta } from 'lib/store';
 import { generateColorSet, generateUsername } from 'lib/util';
 import { nanoid } from 'nanoid';
 import Peer, { DataConnection, MediaConnection } from 'peerjs';
 import { Message } from 'types/message';
 import { PeerStatus, PeerUtils } from 'types/peer';
+import { User } from 'types/api';
+import { useAuth } from 'hooks/use-auth';
 
 export type ChatStatus = 'connected' | 'disconnected' | 'connecting';
 
 export type ChatInfo = {
+    currentUser: User;
     peer: Peer;
     status: ChatStatus;
     connections: DataConnection[];
@@ -29,8 +39,11 @@ export const ChatContext = createContext<ChatInfo>(null);
 
 export const useChat = () => useContext(ChatContext);
 
-export const ChatProvider: React.FC = ({ children }) => {
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const peerRef = useRef<Peer>();
+    const [currentUser, setCurrentUser] = useState<User>(null);
     const [peerStatus, setPeerStatus] = useState<PeerStatus>('offline');
     const [status, setStatus] = useState<ChatStatus>('disconnected');
     const [mediaStream, setMediaStream] = useState<MediaStream>(null);
@@ -47,6 +60,8 @@ export const ChatProvider: React.FC = ({ children }) => {
     }, [connections, currentConnectionId]);
 
     const { pushErrorMessage } = useNotification();
+
+    const { signin, signup, signout, identify } = useAuth();
 
     const isAuthenticated = peerStatus === 'online';
 
@@ -128,11 +143,40 @@ export const ChatProvider: React.FC = ({ children }) => {
     }, []);
 
     const authenticate = async () => {
+        if (currentUser) throw new Error('Already authenticated');
+
         const { initPeer }: PeerUtils = require('../lib/peer');
 
-        const username = generateUsername();
+        const existingUser = await getUserMeta();
 
-        const newPeer = initPeer(username);
+        let user: User;
+        let peerId: string;
+
+        try {
+            if (existingUser) {
+                const result = await signin(existingUser, 'QBq0AzrE6hHlhHEyTh6EL');
+
+                user = result.user;
+                peerId = result.sessionId;
+
+                console.log('Existing user', user);
+            } else {
+                const username = generateUsername();
+
+                const res = await signup(username);
+
+                user = res.user;
+                peerId = res.sessionId;
+            }
+        } catch (err) {
+            console.error(err);
+            pushErrorMessage(
+                'An error occurred while authenticating. Please try again later.',
+            );
+            return;
+        }
+
+        const newPeer = initPeer(peerId);
 
         newPeer.on('connection', onConnection);
 
@@ -159,7 +203,8 @@ export const ChatProvider: React.FC = ({ children }) => {
             };
 
             setPeerStatus('online');
-            setUserMeta(id);
+            setCurrentUser(user);
+            setUserMeta(user.username);
         });
     };
 
@@ -176,9 +221,11 @@ export const ChatProvider: React.FC = ({ children }) => {
     const connect = async (id: string) => {
         setStatus('connecting');
 
+        const sessionId = await identify(id);
+
         const [color1, color2] = generateColorSet();
 
-        const newConnection = peerRef.current.connect(id, {
+        const newConnection = peerRef.current.connect(sessionId, {
             metadata: {
                 startTime: Date.now(),
                 [peerRef.current.id]: color1,
@@ -253,6 +300,7 @@ export const ChatProvider: React.FC = ({ children }) => {
     return (
         <ChatContext.Provider
             value={{
+                currentUser,
                 peer: peerRef.current,
                 isAuthenticated,
                 status,

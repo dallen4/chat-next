@@ -4,7 +4,7 @@ to: test/layouts/<%=name%>.spec.tsx
 import React from 'react';
 import { mount } from 'enzyme';
 import { ThemeProvider } from '@material-ui/core';
-import theme from 'theme/elevatorTheme';
+import theme from 'theme';
 import { <%= h.changeCase.ucFirst(name) %> } from 'layouts';
 import { <%= h.changeCase.ucFirst(name) %>PropTypes } from 'layouts/<%= h.changeCase.ucFirst(name) %>/<%= h.changeCase.ucFirst(name) %>';
 

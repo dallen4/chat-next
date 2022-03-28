@@ -5,7 +5,7 @@ import React from 'react';
 import clsx from 'clsx';
 import useStyles from './styles';
 
-const <%= h.changeCase.ucFirst(name) %> = (props: <%= h.changeCase.ucFirst(name) %>PropTypes) => {
+const <%= h.changeCase.ucFirst(name) %> = (props: <%= h.changeCase.ucFirst(name) %>Props) => {
     const classes = useStyles();
 
     return (
@@ -13,7 +13,7 @@ const <%= h.changeCase.ucFirst(name) %> = (props: <%= h.changeCase.ucFirst(name)
     );
 };
 
-export type <%= h.changeCase.ucFirst(name) %>PropTypes = {
+export type <%= h.changeCase.ucFirst(name) %>Props = {
 }
 
 export default <%= h.changeCase.ucFirst(name) %>;

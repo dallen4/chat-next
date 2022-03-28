@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme: Theme) =>
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
-            backgroundColor: theme.palette.primary.light,
+            backgroundColor: theme.palette.background.paper,
         },
         mobileMessageBox: {
             height: '60px',

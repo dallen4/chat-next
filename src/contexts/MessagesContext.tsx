@@ -18,8 +18,8 @@ export const MessagesContext = createContext<MessagesInfo>(null);
 
 export const useMessages = () => useContext(MessagesContext);
 
-export const MessagesProvider: React.FC = ({ children }) => {
-    const { peer, connection, connections } = useChat();
+export const MessagesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { connection, connections, currentUser } = useChat();
     const [messageMap, setMessageMap] = useState<MessageMap>({});
 
     const init = async () => {
@@ -95,7 +95,7 @@ export const MessagesProvider: React.FC = ({ children }) => {
                 id: nanoid(),
                 timestamp: Date.now(),
                 type: 'user',
-                author: peer.id,
+                author: currentUser.username,
                 content,
             };
 
