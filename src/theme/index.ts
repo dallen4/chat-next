@@ -1,4 +1,4 @@
-import { createTheme } from '@material-ui/core/styles';
+import { createTheme, ThemeOptions } from '@material-ui/core/styles';
 
 type ColorOptions = {
     primary?: string;
@@ -44,7 +44,7 @@ export const buildTheme = (options: ColorOptions = {}) => {
                 error: error || '#f02733',
                 warning: warning || '#ffbe33',
                 info: info || '#5833ff',
-                success: success || '#2da897',
+                success: success || '#1CFFF6',
             },
         },
         overrides: {
@@ -60,6 +60,63 @@ export const buildTheme = (options: ColorOptions = {}) => {
     });
 
     return theme;
+};
+
+export const newTheme: ThemeOptions = {
+    palette: {
+        type: 'dark',
+        primary: {
+            dark: '#014BE7',
+            main: '#3373ff',
+            light: '#5C90FF',
+        },
+        secondary: {
+            dark: '#3501E9',
+            main: '#6336FF',
+            light: '#825EFF',
+        },
+        common: {
+            black: '#000000',
+            white: '#FFFFFF',
+        },
+        background: {
+            default: '#12151c',
+            paper: '#191c23',
+        },
+        text: {
+            primary: '#DcDcDc',
+        },
+        system: {
+            error: '#f02733',
+            warning: '#ffbe33',
+            info: '#5833ff',
+            success: '#1CFFF6',
+        },
+        custom: {
+            grey: {
+                light: '#F5F7F8',
+                mid: '#D3D7DB',
+            },
+            footer: {
+                dark: '#1B2024',
+                light: '#23282C',
+            },
+        },
+    },
+    typography: {
+        fontFamily: 'Lato',
+        body1: {
+            fontFamily: 'Lato',
+        },
+    },
+    props: {
+        MuiButtonBase: {
+            disableRipple: true,
+        },
+        MuiAppBar: {
+            color: 'default',
+        },
+    },
 };
 
 const theme = createTheme({
