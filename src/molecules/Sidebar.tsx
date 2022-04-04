@@ -45,6 +45,7 @@ const Sidebar = ({ open, close }: SidebarProps) => {
         <Drawer
             variant={mobile ? 'temporary' : 'persistent'}
             open={open}
+            onClose={close}
             anchor={'left'}
             className={classes.drawer}
             classes={{ paper: classes.drawerPaper }}
