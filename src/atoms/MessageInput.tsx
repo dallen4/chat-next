@@ -1,6 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import TextField from '@material-ui/core/TextField';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
+import { createStyles, makeStyles, useTheme } from '@material-ui/core/styles';
+import { useMediaQuery } from '@material-ui/core';
+import clsx from 'clsx';
 
 const useStyles = makeStyles((theme) =>
     createStyles({
@@ -9,7 +11,13 @@ const useStyles = makeStyles((theme) =>
             '& > div': {
                 height: '100%',
             },
-        }
+        },
+        mobileMessageInput: {
+            '& > div': {
+                height: '100%',
+                borderRadius: '25px / 50%',
+            },
+        },
     }),
 );
 
@@ -21,6 +29,9 @@ const MessageInput = ({
 }: MessageInputProps) => {
     const classes = useStyles();
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const theme = useTheme();
+    const mobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
@@ -37,9 +48,14 @@ const MessageInput = ({
             value={messageInput}
             onChange={(event) => setMessageInput(event.target.value)}
             onKeyDown={onKey}
-            multiline
-            minRows={2}
-            className={classes.messageInput}
+            inputProps={{
+                enterKeyHint: 'send',
+            }}
+            multiline={!mobile}
+            minRows={!mobile && 2}
+            className={clsx(classes.messageInput, {
+                [classes.mobileMessageInput]: mobile,
+            })}
             variant={'outlined'}
             color={'primary'}
             placeholder={'Type your words here...'}
