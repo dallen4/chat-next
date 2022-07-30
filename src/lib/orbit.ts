@@ -5,10 +5,14 @@ import Identities from 'orbit-db-identity-provider';
 export const initOrbit = async () => {
     const ipfsOptions = { repo: './ipfs' };
     const ipfs = await create(ipfsOptions);
-
-    const orbit = await OrbitDB.createInstance(ipfs);
+console.log(ipfs)
+    try {
+    const orbit = await OrbitDB.createInstance(ipfs, { directory: './orbitdb' });
 
     return orbit;
+    } catch (err) {
+        console.error(err);
+    }
 };
 
 export const initIdentity = async (id: string) => {

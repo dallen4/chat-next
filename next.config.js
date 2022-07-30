@@ -1,12 +1,14 @@
+/**
+ * @type {import('next').NextConfig}
+ */
 /* eslint-disable no-undef */
 const path = require('path');
-const withSourceMaps = require('@zeit/next-source-maps');
 
-module.exports = withSourceMaps({
+module.exports = {
     webpack: (config, options) => {
         config.resolve.modules.push(path.resolve(__dirname, 'src'));
 
-        const { dev, isServer, buildId } = options;
+        const { isServer } = options;
         if (isServer) {
             config.devtool = 'source-map';
         }
@@ -16,4 +18,6 @@ module.exports = withSourceMaps({
         return config;
     },
     env: {},
-});
+    productionBrowserSourceMaps: true,
+    swcMinify: true,
+};

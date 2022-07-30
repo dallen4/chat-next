@@ -23,7 +23,7 @@ const styles: any = (theme: Theme) =>
             height: '100vh',
             maxHeight: '100vh',
             flexGrow: 1,
-            backgroundColor: theme.palette.secondary.main,
+            backgroundColor: theme.palette.background.default,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
@@ -33,14 +33,6 @@ const styles: any = (theme: Theme) =>
         },
         contentShift: {
             marginLeft: 0,
-        },
-        bothButtonText: {
-            color: theme.palette.primary.main,
-            fontSize: '0.9rem',
-        },
-        mediaToggleIcons: {
-            fontSize: '1.1rem',
-            color: theme.palette.primary.main,
         },
         endCallButton: {
             color: theme.palette.system.error,

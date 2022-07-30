@@ -1,9 +1,9 @@
 ---
 to: src/layouts/<%=name%>/styles.ts
 ---
-import { Theme, makeStyles } from '@material-ui/core';
+import { makeStyles, createStyles } from '@material-ui/core';
 
-const styles: any = (theme: Theme | any) => ({
-});
+const styles = makeStyles((theme: Theme) => createStyles({
+}));
 
-export default makeStyles(styles);
+export default styles;

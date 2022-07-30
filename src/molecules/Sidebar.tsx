@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) =>
         },
         drawerPaper: {
             width: drawerWidth,
-            backgroundColor: theme.palette.secondary.main,
+            backgroundColor: theme.palette.background.default,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
