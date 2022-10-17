@@ -1,11 +1,17 @@
 import Peer from 'peerjs';
 
-export const initPeer = (id: string) =>
-    new Peer(id, {
-        host: 'uchat-server.herokuapp.com',
+export const initPeer = (id: string) => {
+    const server = new URL(process.env.NEXT_PUBLIC_PEER_SERVER_URL!);
+
+    const peer = new Peer(id, {
+        host: server.host,
+        path: server.pathname,
         secure: true,
         port: 443,
     });
+
+    return peer;
+}
 
 export const getCameraStream = async (audioOnly = false): Promise<MediaStream> => {
     const constraintOptions: MediaStreamConstraints = {
